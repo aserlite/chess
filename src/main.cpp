@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include "Logic/Game.hpp"
+#include "Logic/Piece.hpp"
 #include "quick_imgui/quick_imgui.hpp"
 
 std::string getPieceLabel(const Piece& p)
@@ -26,6 +27,7 @@ std::string getPieceLabel(const Piece& p)
 int main()
 {
     ChessGame game;
+    Position  selectedPos{-1, -1};
 
     quick_imgui::loop(
         "Chess Game",
@@ -35,8 +37,11 @@ int main()
                 
                 ImGui::Begin("Plateau de Jeu");
 
-                const auto& board = game.getBoard();
+                if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
+                    selectedPos = {-1, -1};
+                }
 
+                const auto& board = game.getBoard();
                 float cellSize = 60.0f; 
                 
                 ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
@@ -47,6 +52,13 @@ int main()
                         bool isDark = (x + y) % 2 != 0;
                         ImVec4 bgCol = isDark ? ImVec4(0.4f, 0.4f, 0.4f, 1.f) : ImVec4(0.8f, 0.8f, 0.8f, 1.f);
                         
+                        if (selectedPos.x == x && selectedPos.y == y) {
+                            bgCol = ImVec4(0.0f, 0.7f, 0.0f, 1.0f); 
+                        }
+                         else if (selectedPos.x != -1 && game.isValidMove(selectedPos, {x, y})) {
+                            bgCol = ImVec4(0.0f, 0.4f, 0.8f, 0.8f);
+                         }
+
                         const Piece& p = board.getPiece(x, y);
                         ImVec4 textCol = (p.color == PieceColor::White) ? ImVec4(1.f, 1.f, 1.f, 1.f) : ImVec4(0.f, 0.f, 0.f, 1.f);
                         if (p.isEmpty()) textCol = ImVec4(0,0,0,0);
@@ -61,7 +73,31 @@ int main()
 
                         std::string label = getPieceLabel(p);
                         if (ImGui::Button(label.c_str(), ImVec2(cellSize, cellSize))) {
-                            std::cout << "Click case: " << x << ", " << y << "\n";
+                            
+                            if (selectedPos.x == -1) {
+                                if (!p.isEmpty()) {
+                                    selectedPos = {x, y};
+                                    std::cout << "Selection de : " << x << ", " << y << "\n";
+                                }
+                            }
+                            else {
+                                Position targetPos = {x, y};
+                                
+                                if (selectedPos.x == x && selectedPos.y == y) {
+                                    selectedPos = {-1, -1};
+                                }
+                                else {
+                                    if (game.move(selectedPos, targetPos)) {
+                                        std::cout << "Mouvement effectue !\n";
+                                        selectedPos = {-1, -1};
+                                    } else {
+                                        std::cout << "Mouvement invalide.\n";
+                                        if (!p.isEmpty() && p.color == board.getPiece(selectedPos.x, selectedPos.y).color) {
+                                            selectedPos = {x, y};
+                                        }
+                                    }
+                                }
+                            }
                         }
 
                         ImGui::PopID();

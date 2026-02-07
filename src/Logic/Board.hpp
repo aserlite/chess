@@ -39,6 +39,8 @@ public:
         m_grid[y][x] = p;
     }
 
+    bool isMoveValid(Position from, Position to) const;
+
 private:
     std::array<std::array<Piece, SIZE>, SIZE> m_grid;
 
@@ -54,4 +56,11 @@ private:
         m_grid[y][6] = {PieceType::Knight, color};
         m_grid[y][7] = {PieceType::Rook, color};
     }
+
+    bool isPathClear(Position from, Position to) const;
+
+    bool checkPawnMove(Position from, Position to, PieceColor color) const;
+    bool checkRookMove(Position from, Position to) const;
+    bool checkBishopMove(Position from, Position to) const;
+    bool checkKnightMove(Position from, Position to) const;
 };
