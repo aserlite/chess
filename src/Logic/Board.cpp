@@ -71,11 +71,17 @@ bool Board::isPathClear(Position from, Position to) const
 
 bool Board::checkBishopMove(Position from, Position to) const
 {
-    return false; /* TODO */
+    int dx = std::abs(to.x - from.x);
+    int dy = std::abs(to.y - from.y);
+
+    return dx == dy;
 }
 bool Board::checkKnightMove(Position from, Position to) const
 {
-    return false; /* TODO */
+    int dx = std::abs(to.x - from.x);
+    int dy = std::abs(to.y - from.y);
+
+    return (dx == 2 && dy == 1) || (dx == 1 && dy == 2);
 }
 bool Board::checkPawnMove(Position from, Position to, PieceColor color) const
 {
