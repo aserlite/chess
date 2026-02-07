@@ -1,41 +1,79 @@
 #include <imgui.h>
+#include <fstream>
 #include <iostream>
 #include <string>
 #include "Logic/Game.hpp"
 #include "Logic/Piece.hpp"
 #include "quick_imgui/quick_imgui.hpp"
 
+bool fileExists(const std::string& name)
+{
+    std::ifstream f(name.c_str());
+    return f.good();
+}
+
 std::string getPieceLabel(const Piece& p)
 {
-    if (p.color == PieceColor::None)
+    if (p.type == PieceType::None)
         return " ";
 
-    std::string label;
-    switch (p.type)
+    if (p.color == PieceColor::White)
     {
-    case PieceType::Pawn: label = "P"; break;
-    case PieceType::Rook: label = "T"; break;   // Tour
-    case PieceType::Knight: label = "C"; break; // Cavalier
-    case PieceType::Bishop: label = "F"; break; // Fou
-    case PieceType::Queen: label = "D"; break;  // Dame
-    case PieceType::King: label = "R"; break;   // Roi
-    default: label = "?";
+        switch (p.type)
+        {
+        case PieceType::Pawn: return "♙";
+        case PieceType::Rook: return "♖";
+        case PieceType::Knight: return "♘";
+        case PieceType::Bishop: return "♗";
+        case PieceType::Queen: return "♕";
+        case PieceType::King: return "♔";
+        default: return "?";
+        }
     }
-    return label;
+    else
+    {
+        switch (p.type)
+        {
+        case PieceType::Pawn: return "♟";
+        case PieceType::Rook: return "♜";
+        case PieceType::Knight: return "♞";
+        case PieceType::Bishop: return "♝";
+        case PieceType::Queen: return "♛";
+        case PieceType::King: return "♚";
+        default: return "?";
+        }
+    }
 }
 
 int main()
 {
     ChessGame game;
     Position  selectedPos{-1, -1};
+    ImFont*   mainFont = nullptr;
 
     quick_imgui::loop(
         "Chess Game",
         {
-            .init = [&]() {},
+            .init = [&]() {
+                ImGuiIO& io = ImGui::GetIO();
+                static const ImWchar icons_ranges[] = { 0x0020, 0x00FF, 0x2600, 0x26FF, 0 };
+                
+                const char* fontPath = "./src/DejaVuSans.ttf";
+
+                if (fileExists(fontPath)) {
+                    mainFont = io.Fonts->AddFontFromFileTTF(fontPath, 40.0f, NULL, icons_ranges);
+                } else {
+                    std::cerr << "Erreur: Font introuvable (" << fontPath << "). Utilisation defaut.\n";
+                    ImFontConfig config;
+                    config.SizePixels = 40.0f;
+                    mainFont = io.Fonts->AddFontDefault(&config);
+                } },
+
             .loop = [&]() {
                 
                 ImGui::Begin("Plateau de Jeu");
+
+                if (mainFont) ImGui::PushFont(mainFont);
 
                 if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
                     selectedPos = {-1, -1};
@@ -60,7 +98,8 @@ int main()
                          }
 
                         const Piece& p = board.getPiece(x, y);
-                        ImVec4 textCol = (p.color == PieceColor::White) ? ImVec4(1.f, 1.f, 1.f, 1.f) : ImVec4(0.f, 0.f, 0.f, 1.f);
+
+                        ImVec4 textCol = ImVec4(0.1f, 0.1f, 0.1f, 1.f);
                         if (p.isEmpty()) textCol = ImVec4(0,0,0,0);
 
                         ImGui::PushStyleColor(ImGuiCol_Button, bgCol);
@@ -109,6 +148,7 @@ int main()
                 }
 
                 ImGui::PopStyleVar();
+                if (mainFont) ImGui::PopFont();
                 ImGui::End(); },
         }
     );
