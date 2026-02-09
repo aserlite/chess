@@ -37,6 +37,7 @@ bool ChessGame::move(Position from, Position to)
 
     if (m_board.isMoveValid(from, to) && m_board.getPiece(from.x, from.y).color == m_currentTurn)
     {
+        saveSnapshot();
         Piece target = m_board.getPiece(to.x, to.y);
         if (target.type == PieceType::King)
         {
@@ -237,4 +238,33 @@ void ChessGame::loadFEN(const std::string& fen)
 
     m_history.clear();
     m_state = GameState::Playing;
+}
+
+void ChessGame::saveSnapshot()
+{
+    GameSnapshot snapshot;
+    snapshot.board       = m_board;
+    snapshot.currentTurn = m_currentTurn;
+    snapshot.state       = m_state;
+
+    m_backupHistory.push_back(snapshot);
+}
+
+void ChessGame::undo()
+{
+    if (m_backupHistory.empty())
+        return;
+
+    GameSnapshot lastState = m_backupHistory.back();
+
+    m_board       = lastState.board;
+    m_currentTurn = lastState.currentTurn;
+    m_state       = lastState.state;
+
+    m_backupHistory.pop_back();
+
+    if (!m_history.empty())
+    {
+        m_history.pop_back();
+    }
 }

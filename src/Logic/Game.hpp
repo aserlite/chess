@@ -10,6 +10,12 @@ enum class GameState {
     BlackWins
 };
 
+struct GameSnapshot {
+    Board      board;
+    PieceColor currentTurn;
+    GameState  state;
+};
+
 class ChessGame {
 public:
     ChessGame();
@@ -30,6 +36,8 @@ public:
     std::string getFEN() const;
     void        loadFEN(const std::string& fen);
 
+    void undo();
+
 private:
     Board                    m_board;
     PieceColor               m_currentTurn;
@@ -39,4 +47,7 @@ private:
     Position  m_promotionPos;
 
     void changeTurn();
+
+    std::vector<GameSnapshot> m_backupHistory;
+    void                      saveSnapshot();
 };

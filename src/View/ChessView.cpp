@@ -216,6 +216,20 @@ void ChessView::drawInfoWindow()
 
     ImGui::Separator();
 
+    bool isHistoryEmpty = m_game.getHistory().empty();
+
+    ImGui::BeginDisabled(isHistoryEmpty);
+
+    if (ImGui::Button("Annuler le dernier coup"))
+    {
+        m_game.undo();
+        m_selectedPos = {-1, -1};
+    }
+
+    ImGui::EndDisabled();
+
+    ImGui::Separator();
+
     ImGui::Text("Historique:");
     ImGui::BeginChild("History", ImVec2(0, -1), false, ImGuiWindowFlags_HorizontalScrollbar);
 
