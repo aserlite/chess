@@ -38,6 +38,11 @@ public:
 
     void undo();
 
+    bool isVsAI() const { return m_vsAI; }
+    void setVsAI(bool active) { m_vsAI = active; }
+
+    void playAITurn();
+
 private:
     Board                    m_board;
     PieceColor               m_currentTurn;
@@ -50,4 +55,6 @@ private:
 
     std::vector<GameSnapshot> m_backupHistory;
     void                      saveSnapshot();
+
+    bool m_vsAI = false;
 };

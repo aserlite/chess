@@ -1,10 +1,12 @@
 #include "Game.hpp"
 #include <cctype> // Pour toupper()
+#include "AI.hpp"
 
 ChessGame::ChessGame()
     : m_currentTurn(PieceColor::White)
     , m_state(GameState::Playing)
     , m_promotionPos{-1, -1}
+    , m_vsAI(false)
 {
 }
 
@@ -266,5 +268,21 @@ void ChessGame::undo()
     if (!m_history.empty())
     {
         m_history.pop_back();
+    }
+}
+
+void ChessGame::playAITurn()
+{
+    if (m_currentTurn != PieceColor::Black || m_state != GameState::Playing)
+        return;
+
+    Move aiMove;
+    if (AI::getRandomMove(m_board, PieceColor::Black, aiMove))
+    {
+        move(aiMove.from, aiMove.to);
+    }
+    else
+    {
+        // A faire pat ou mat mais y'a pas encore
     }
 }

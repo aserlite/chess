@@ -66,6 +66,7 @@ void ChessView::draw()
         }
         else if (action == MenuAction::StartAI)
         {
+            m_game.setVsAI(true);
             m_appState = AppState::Game;
         }
     }
@@ -79,6 +80,11 @@ void ChessView::draw()
 void ChessView::drawBoardWindow()
 {
     ImGui::Begin("Plateau de Jeu");
+
+    if (m_game.isVsAI() && m_game.getCurrentTurn() == PieceColor::Black && m_game.getState() == GameState::Playing)
+    {
+        m_game.playAITurn();
+    }
 
     if (m_game.getCurrentTurn() == PieceColor::White)
         ImGui::TextColored(ImVec4(1, 1, 1, 1), "Trait aux BLANCS");
