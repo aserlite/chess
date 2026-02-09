@@ -1,12 +1,54 @@
 #include "Board.hpp"
 #include <cmath>
-#include <iostream>
+
+Board::Board()
+{
+    resetBoard();
+}
+
+void Board::resetBoard()
+{
+    for (auto& row : m_grid)
+    {
+        row.fill(Piece{});
+    }
+
+    for (int x = 0; x < SIZE; ++x)
+    {
+        m_grid[1][x] = Piece{PieceType::Pawn, PieceColor::Black};
+        m_grid[6][x] = Piece{PieceType::Pawn, PieceColor::White};
+    }
+
+    setupNobleRow(0, PieceColor::Black);
+    setupNobleRow(7, PieceColor::White);
+}
+
+const Piece& Board::getPiece(int x, int y) const
+{
+    return m_grid[y][x];
+}
+
+void Board::setPiece(int x, int y, Piece p)
+{
+    m_grid[y][x] = p;
+}
+
+void Board::setupNobleRow(int y, PieceColor color)
+{
+    m_grid[y][0] = {PieceType::Rook, color};
+    m_grid[y][1] = {PieceType::Knight, color};
+    m_grid[y][2] = {PieceType::Bishop, color};
+    m_grid[y][3] = {PieceType::Queen, color};
+    m_grid[y][4] = {PieceType::King, color};
+    m_grid[y][5] = {PieceType::Bishop, color};
+    m_grid[y][6] = {PieceType::Knight, color};
+    m_grid[y][7] = {PieceType::Rook, color};
+}
 
 bool Board::isMoveValid(Position from, Position to) const
 {
     if (from == to)
         return false;
-
     if (to.x < 0 || to.x >= 8 || to.y < 0 || to.y >= 8)
         return false;
 
@@ -40,11 +82,6 @@ bool Board::isMoveValid(Position from, Position to) const
     }
 }
 
-bool Board::checkRookMove(Position from, Position to) const
-{
-    return (from.x == to.x || from.y == to.y);
-}
-
 bool Board::isPathClear(Position from, Position to) const
 {
     int dx = to.x - from.x;
@@ -65,30 +102,14 @@ bool Board::isPathClear(Position from, Position to) const
         currentX += stepX;
         currentY += stepY;
     }
-
     return true;
 }
 
-bool Board::checkBishopMove(Position from, Position to) const
-{
-    int dx = std::abs(to.x - from.x);
-    int dy = std::abs(to.y - from.y);
-
-    return dx == dy;
-}
-bool Board::checkKnightMove(Position from, Position to) const
-{
-    int dx = std::abs(to.x - from.x);
-    int dy = std::abs(to.y - from.y);
-
-    return (dx == 2 && dy == 1) || (dx == 1 && dy == 2);
-}
 bool Board::checkPawnMove(Position from, Position to, PieceColor color) const
 {
     int direction = (color == PieceColor::White) ? -1 : 1;
-
-    int dx = to.x - from.x;
-    int dy = to.y - from.y;
+    int dx        = to.x - from.x;
+    int dy        = to.y - from.y;
 
     if (dx == 0)
     {
@@ -96,32 +117,34 @@ bool Board::checkPawnMove(Position from, Position to, PieceColor color) const
         {
             return getPiece(to.x, to.y).isEmpty();
         }
-
-        if (dy == 2 * direction)
+        int startRow = (color == PieceColor::White) ? 6 : 1;
+        if (dy == 2 * direction && from.y == startRow)
         {
-            int startRow = (color == PieceColor::White) ? 6 : 1;
-
-            if (from.y == startRow)
-            {
-                bool destinationEmpty = getPiece(to.x, to.y).isEmpty();
-                bool pathEmpty        = getPiece(from.x, from.y + direction).isEmpty();
-
-                return destinationEmpty && pathEmpty;
-            }
+            return getPiece(to.x, to.y).isEmpty() && getPiece(from.x, from.y + direction).isEmpty();
         }
     }
-
     else if (std::abs(dx) == 1 && dy == direction)
     {
         const Piece& target = getPiece(to.x, to.y);
-
-        if (!target.isEmpty())
-        {
-            if (target.color != color)
-            {
-                return true;
-            }
-        }
+        return !target.isEmpty() && target.color != color;
     }
+
     return false;
+}
+
+bool Board::checkRookMove(Position from, Position to) const
+{
+    return (from.x == to.x || from.y == to.y);
+}
+
+bool Board::checkBishopMove(Position from, Position to) const
+{
+    return std::abs(to.x - from.x) == std::abs(to.y - from.y);
+}
+
+bool Board::checkKnightMove(Position from, Position to) const
+{
+    int dx = std::abs(to.x - from.x);
+    int dy = std::abs(to.y - from.y);
+    return (dx == 2 && dy == 1) || (dx == 1 && dy == 2);
 }
