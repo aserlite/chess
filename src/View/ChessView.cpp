@@ -5,6 +5,7 @@
 ChessView::ChessView()
     : m_selectedPos{-1, -1}
     , m_font(nullptr)
+    , m_appState(AppState::Menu)
 {
 }
 
@@ -50,8 +51,29 @@ void ChessView::init()
 
 void ChessView::draw()
 {
-    drawBoardWindow();
-    drawInfoWindow();
+    if (m_appState == AppState::Menu)
+    {
+        MenuAction action = m_menu.draw();
+
+        if (action == MenuAction::Start1v1)
+        {
+            std::string fen = m_menu.getEnteredFEN();
+            if (!fen.empty())
+            {
+                m_game.loadFEN(fen);
+            }
+            m_appState = AppState::Game;
+        }
+        else if (action == MenuAction::StartAI)
+        {
+            m_appState = AppState::Game;
+        }
+    }
+    else
+    {
+        drawBoardWindow();
+        drawInfoWindow();
+    }
 }
 
 void ChessView::drawBoardWindow()
@@ -125,6 +147,62 @@ void ChessView::drawBoardWindow()
         }
     }
     ImGui::PopStyleVar();
+
+    if (m_game.getState() == GameState::PromotionSelect)
+    {
+        ImGui::OpenPopup("Promotion");
+    }
+
+    if (ImGui::BeginPopupModal("Promotion", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        if (ImGui::Button("Dame", ImVec2(120, 0)))
+        {
+            m_game.promotePawn(PieceType::Queen);
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Tour", ImVec2(120, 0)))
+        {
+            m_game.promotePawn(PieceType::Rook);
+            ImGui::CloseCurrentPopup();
+        }
+
+        if (ImGui::Button("Fou", ImVec2(120, 0)))
+        {
+            m_game.promotePawn(PieceType::Bishop);
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Cavalier", ImVec2(120, 0)))
+        {
+            m_game.promotePawn(PieceType::Knight);
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::EndPopup();
+    }
+
+    if (m_game.getState() == GameState::WhiteWins || m_game.getState() == GameState::BlackWins)
+    {
+        ImGui::OpenPopup("gg");
+    }
+
+    if (ImGui::BeginPopupModal("gg", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        if (m_game.getState() == GameState::WhiteWins)
+            ImGui::TextColored(ImVec4(0, 1, 0, 1), "VICTOIRE DES BLANCS !");
+        else
+            ImGui::TextColored(ImVec4(0, 1, 0, 1), "VICTOIRE DES NOIRS !");
+
+        ImGui::Separator();
+
+        if (ImGui::Button("Quitter"))
+        {
+            exit(0);
+        }
+        ImGui::EndPopup();
+    }
+
     ImGui::End();
 }
 

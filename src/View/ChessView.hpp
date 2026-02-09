@@ -3,6 +3,12 @@
 #include <string>
 #include <vector>
 #include "../Logic/Game.hpp"
+#include "MenuView.hpp"
+
+enum class AppState {
+    Menu,
+    Game
+};
 
 class ChessView {
 public:
@@ -14,8 +20,11 @@ public:
 
 private:
     ChessGame m_game;
-    Position  m_selectedPos;
-    ImFont*   m_font;
+    MenuView  m_menu;
+    AppState  m_appState;
+
+    Position m_selectedPos;
+    ImFont*  m_font;
 
     void        drawBoardWindow();
     void        drawInfoWindow();
