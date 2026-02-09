@@ -67,6 +67,8 @@ void ChessView::draw()
         else if (action == MenuAction::StartAI)
         {
             m_game.setVsAI(true);
+            m_game.setAIDifficulty(m_menu.getSelectedDifficulty());
+            m_game.setPlayerColor(m_menu.getSelectedColor());
             m_appState = AppState::Game;
         }
     }
@@ -81,7 +83,7 @@ void ChessView::drawBoardWindow()
 {
     ImGui::Begin("Plateau de Jeu");
 
-    if (m_game.isVsAI() && m_game.getCurrentTurn() == PieceColor::Black && m_game.getState() == GameState::Playing)
+    if (m_game.isVsAI() && m_game.getCurrentTurn() != m_game.getPlayerColor() && m_game.getState() == GameState::Playing)
     {
         m_game.playAITurn();
     }

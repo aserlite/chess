@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include "AI.hpp"
 #include "Board.hpp"
 
 enum class GameState {
@@ -41,7 +42,10 @@ public:
     bool isVsAI() const { return m_vsAI; }
     void setVsAI(bool active) { m_vsAI = active; }
 
-    void playAITurn();
+    void       playAITurn();
+    void       setAIDifficulty(AIDifficulty diff) { m_aiDifficulty = diff; }
+    void       setPlayerColor(PieceColor color) { m_playerColor = color; }
+    PieceColor getPlayerColor() const { return m_playerColor; }
 
 private:
     Board                    m_board;
@@ -56,5 +60,7 @@ private:
     std::vector<GameSnapshot> m_backupHistory;
     void                      saveSnapshot();
 
-    bool m_vsAI = false;
+    bool         m_vsAI         = false;
+    AIDifficulty m_aiDifficulty = AIDifficulty::Easy;
+    PieceColor   m_playerColor  = PieceColor::White;
 };

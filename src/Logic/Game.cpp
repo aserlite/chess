@@ -273,16 +273,14 @@ void ChessGame::undo()
 
 void ChessGame::playAITurn()
 {
-    if (m_currentTurn != PieceColor::Black || m_state != GameState::Playing)
+    if (m_currentTurn == m_playerColor || m_state != GameState::Playing)
         return;
 
-    Move aiMove;
-    if (AI::getRandomMove(m_board, PieceColor::Black, aiMove))
+    Move       aiMove;
+    PieceColor aiColor = (m_playerColor == PieceColor::White) ? PieceColor::Black : PieceColor::White;
+
+    if (AI::getBestMove(m_board, aiColor, m_aiDifficulty, aiMove))
     {
         move(aiMove.from, aiMove.to);
-    }
-    else
-    {
-        // A faire pat ou mat mais y'a pas encore
     }
 }
