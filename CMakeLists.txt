@@ -49,3 +49,27 @@ add_subdirectory(glimac)
 target_link_libraries(${PROJECT_NAME} PRIVATE glimac)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Wno-unknown-pragmas")
+
+# ---  Config des tests unitaires ---
+include(FetchContent)
+FetchContent_Declare(
+  Catch2
+  GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+  GIT_TAG        v3.4.0
+)
+FetchContent_MakeAvailable(Catch2)
+
+file(GLOB_RECURSE LOGIC_SOURCES CONFIGURE_DEPENDS "src/Logic/*.cpp")
+
+file(GLOB_RECURSE TEST_SOURCES CONFIGURE_DEPENDS "tests/*.cpp")
+
+add_executable(unit_tests 
+    ${TEST_SOURCES}
+    ${LOGIC_SOURCES}
+)
+
+target_link_libraries(unit_tests PRIVATE Catch2::Catch2WithMain)
+target_include_directories(unit_tests PRIVATE src)
+
+include(Catch)
+catch_discover_tests(unit_tests EXTRA_ARGS "-s")
