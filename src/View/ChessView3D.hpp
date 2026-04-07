@@ -1,0 +1,36 @@
+#pragma once
+
+#include <imgui.h>
+#include <memory>
+#include <glimac/Program.hpp>
+#include <glimac/glm.hpp>
+#include "../Logic/Game.hpp"
+
+class ChessView3D {
+public:
+    ChessView3D();
+    ~ChessView3D();
+
+    void init();
+    void draw(const ChessGame& game);
+
+private:
+    unsigned int m_fbo = 0;
+    unsigned int m_texture = 0;
+    unsigned int m_rbo = 0;
+    
+    std::unique_ptr<glimac::Program> m_program;
+    
+    unsigned int m_cubeVao = 0;
+    unsigned int m_cubeVbo = 0;
+
+    int m_width = 800;
+    int m_height = 600;
+
+    float m_cameraAngleX = 0.0f;
+    float m_cameraAngleY = 0.8f;
+    float m_cameraDistance = 10.0f;
+
+    void setupBuffers();
+    void resizeFBO(int width, int height);
+};

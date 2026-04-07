@@ -4,6 +4,8 @@
 #include <vector>
 #include "../Logic/Game.hpp"
 #include "MenuView.hpp"
+#include "ChessView2D.hpp"
+#include "ChessView3D.hpp"
 
 enum class AppState {
     Menu,
@@ -23,12 +25,8 @@ private:
     MenuView  m_menu;
     AppState  m_appState;
 
-    Position m_selectedPos;
-    ImFont*  m_font;
+    ChessView2D m_view2D;
+    ChessView3D m_view3D;
 
-    void        drawBoardWindow();
-    void        drawInfoWindow();
-    std::string getPieceLabel(const Piece& p) const;
-
-    bool fileExists(const std::string& name) const;
+    void drawInfoWindow();
 };

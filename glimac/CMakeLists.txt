@@ -12,11 +12,11 @@ target_sources(glimac PRIVATE ${GLIMAC_SOURCES})
 target_include_directories(glimac PUBLIC ../glimac)
 
 # ---Add GLFW---
-# add_subdirectory(third-party/glfw) # Provided by quick_imgui
+# add_subdirectory(third-party/glfw)
 target_link_libraries(glimac PUBLIC glfw)
 # ---Add glad---
-# add_library(glad third-party/glad/src/glad.c) # Provided by quick_imgui
-# target_include_directories(glad PUBLIC third-party/glad/include) # Provided by quick_imgui
+# add_library(glad third-party/glad/src/glad.c)
+# target_include_directories(glad PUBLIC third-party/glad/include)
 target_link_libraries(glimac PUBLIC glad)
 # ---Add glm---
 add_subdirectory(third-party/glm)
