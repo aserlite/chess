@@ -47,3 +47,5 @@ target_link_libraries(${PROJECT_NAME} PRIVATE quick_imgui::quick_imgui)
 # Add glimac library
 add_subdirectory(glimac)
 target_link_libraries(${PROJECT_NAME} PRIVATE glimac)
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Wno-unknown-pragmas")
