@@ -34,7 +34,7 @@ MenuAction MenuView::draw()
 
     ImGui::Spacing();
 
-    if (ImGui::Button("Joueur vs IA (Ca arrive fort)", ImVec2(-1, 50)))
+    if (ImGui::Button("Joueur vs IA", ImVec2(-1, 50)))
     {
         m_showAIConfigPopup = true;
         ImGui::OpenPopup("Configuration IA");
