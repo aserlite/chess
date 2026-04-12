@@ -13,7 +13,7 @@ void Board::resetBoard()
         row.fill(Piece{});
     }
 
-    for (int x = 0; x < SIZE; ++x)
+    for (std::size_t x = 0; x < SIZE; ++x)
     {
         m_grid[1][x] = Piece{PieceType::Pawn, PieceColor::Black};
         m_grid[6][x] = Piece{PieceType::Pawn, PieceColor::White};
@@ -23,14 +23,14 @@ void Board::resetBoard()
     setupNobleRow(7, PieceColor::White);
 }
 
-const Piece& Board::getPiece(int x, int y) const
+Piece Board::getPiece(int x, int y) const
 {
-    return m_grid[y][x];
+    return m_grid.at(static_cast<std::size_t>(y)).at(static_cast<std::size_t>(x));
 }
 
 void Board::setPiece(int x, int y, Piece p)
 {
-    m_grid[y][x] = p;
+    m_grid.at(static_cast<std::size_t>(y)).at(static_cast<std::size_t>(x)) = p;
 }
 
 void Board::setupNobleRow(int y, PieceColor color)
@@ -49,11 +49,13 @@ bool Board::isMoveValid(Position from, Position to) const
 {
     if (from == to)
         return false;
-    if (to.x < 0 || to.x >= 8 || to.y < 0 || to.y >= 8)
+    if (from.x < 0 || from.x >= static_cast<int>(SIZE) || from.y < 0 || from.y >= static_cast<int>(SIZE))
+        return false;
+    if (to.x < 0 || to.x >= static_cast<int>(SIZE) || to.y < 0 || to.y >= static_cast<int>(SIZE))
         return false;
 
-    const Piece& sourcePiece = getPiece(from.x, from.y);
-    const Piece& targetPiece = getPiece(to.x, to.y);
+    const Piece sourcePiece = getPiece(from.x, from.y);
+    const Piece targetPiece = getPiece(to.x, to.y);
 
     if (sourcePiece.isEmpty())
         return false;
@@ -87,8 +89,8 @@ bool Board::isPathClear(Position from, Position to) const
     int dx = to.x - from.x;
     int dy = to.y - from.y;
 
-    int stepX = (dx == 0) ? 0 : (dx > 0 ? 1 : -1);
-    int stepY = (dy == 0) ? 0 : (dy > 0 ? 1 : -1);
+    int stepX = (dx > 0) - (dx < 0);
+    int stepY = (dy > 0) - (dy < 0);
 
     int currentX = from.x + stepX;
     int currentY = from.y + stepY;

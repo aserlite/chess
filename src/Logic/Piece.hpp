@@ -1,12 +1,13 @@
 #pragma once
+#include <cstdint>
 
-enum class PieceColor {
+enum class PieceColor : std::uint8_t {
     None,
     White,
     Black
 };
 
-enum class PieceType {
+enum class PieceType : std::uint8_t {
     None,   // Case vide
     Pawn,   // Pion
     Rook,   // Tour
@@ -20,17 +21,17 @@ struct Piece {
     PieceType  type  = PieceType::None;
     PieceColor color = PieceColor::None;
 
-    bool isEmpty() const
+    [[nodiscard]] constexpr bool isEmpty() const noexcept
     {
         return type == PieceType::None;
     }
 };
 
 struct Position {
-    int x;
-    int y;
+    int x{0};
+    int y{0};
 
-    bool operator==(const Position& other) const
+    [[nodiscard]] constexpr bool operator==(const Position& other) const noexcept
     {
         return x == other.x && y == other.y;
     }
