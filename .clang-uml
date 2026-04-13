@@ -1,0 +1,14 @@
+query_driver: "clang++"
+compilation_database_dir: build
+output_directory: diagrams
+
+diagrams:
+  chess_classes:
+    type: class
+    glob:
+      - src/**/*.cpp
+      - src/**/*.hpp
+    exclude:
+      namespaces:
+        - std
+        - glimac
