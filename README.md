@@ -1,6 +1,8 @@
 # Chess
 
-# Compilation
+Ce projet est un jeu d'échecs qui croise trois matières de la formation IMAC : programmation c++, synthèse d'images (opengl) et mathématiques (aléatoire).
+
+## Compilation
 
 Sur macOS, il faut bien penser à installer clang-tidy (par exemple en installant llvm) pour pouvoir compiler.
 Avec brew, on peut installer llvm avec cette commande.
