@@ -1,6 +1,6 @@
 #include "ChessView2D.hpp"
-#include <fstream>
 #include <iostream>
+#include <filesystem>
 
 ChessView2D::ChessView2D()
     : m_selectedPos{-1, -1}
@@ -48,8 +48,9 @@ void ChessView2D::init()
     }
 }
 
-void ChessView2D::draw(ChessGame& game)
+bool ChessView2D::draw(ChessGame& game)
 {
+    bool quitRequested = false;
     ImGui::Begin("Plateau de Jeu (2D)");
 
     if (game.getCurrentTurn() == PieceColor::White)
@@ -170,18 +171,19 @@ void ChessView2D::draw(ChessGame& game)
 
         if (ImGui::Button("Quitter"))
         {
-            exit(0);
+            ImGui::CloseCurrentPopup();
+            quitRequested = true;
         }
         ImGui::EndPopup();
     }
 
     ImGui::End();
+    return quitRequested;
 }
 
 bool ChessView2D::fileExists(const std::string& name) const
 {
-    std::ifstream f(name.c_str());
-    return f.good();
+    return std::filesystem::exists(name);
 }
 
 std::string ChessView2D::getPieceLabel(const Piece& p) const

@@ -8,12 +8,12 @@ public:
     ChessView2D();
 
     void init();
-    void draw(ChessGame& game);
+    bool draw(ChessGame& game);
 
 private:
     Position m_selectedPos;
     ImFont*  m_font;
 
-    std::string getPieceLabel(const Piece& p) const;
-    bool fileExists(const std::string& name) const;
+    [[nodiscard]] std::string getPieceLabel(const Piece& p) const;
+    [[nodiscard]] bool fileExists(const std::string& name) const;
 };

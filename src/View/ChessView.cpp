@@ -1,7 +1,10 @@
 #include "ChessView.hpp"
+#include <array>
 
-ChessView::ChessView()
-    : m_appState(AppState::Menu)
+ChessView::ChessView(ChessGame& game, AIController& aiController)
+    : m_game(game)
+    , m_aiController(aiController)
+    , m_appState(AppState::Menu)
 {
 }
 
@@ -25,6 +28,10 @@ void ChessView::draw()
             {
                 m_game.loadFEN(fen);
             }
+            else
+            {
+                m_game.loadFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+            }
             m_appState = AppState::Game;
         }
         else if (action == MenuAction::StartAI)
@@ -32,15 +39,28 @@ void ChessView::draw()
             m_aiController.setEnabled(true);
             m_aiController.setDifficulty(m_menu.getSelectedDifficulty());
             m_aiController.setPlayerColor(m_menu.getSelectedColor());
+            std::string fen = m_menu.getEnteredFEN();
+            if (!fen.empty())
+            {
+                m_game.loadFEN(fen);
+            }
+            else
+            {
+                m_game.loadFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+            }
             m_appState = AppState::Game;
         }
     }
     else
     {
-        m_aiController.playAITurn(m_game);
-        m_view2D.draw(m_game);
+        bool quit = m_view2D.draw(m_game);
         m_view3D.draw(m_game);
         drawInfoWindow();
+
+        if (quit)
+        {
+            m_appState = AppState::Menu;
+        }
     }
 }
 
@@ -50,7 +70,10 @@ void ChessView::drawInfoWindow()
 
     ImGui::Text("FEN:");
     std::string fen = m_game.getFEN();
-    ImGui::InputText("##fen", (char*)fen.c_str(), fen.size(), ImGuiInputTextFlags_ReadOnly);
+    std::array<char, 256> fenBuffer{};
+    std::strncpy(fenBuffer.data(), fen.c_str(), fenBuffer.size() - 1);
+    fenBuffer[fenBuffer.size() - 1] = '\0';
+    ImGui::InputText("##fen", fenBuffer.data(), fenBuffer.size(), ImGuiInputTextFlags_ReadOnly);
 
     ImGui::Separator();
 

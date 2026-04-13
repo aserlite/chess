@@ -15,10 +15,10 @@ public:
 
     MenuAction draw();
 
-    std::string getEnteredFEN() const;
+    [[nodiscard]] std::string getEnteredFEN() const;
 
-    AIDifficulty getSelectedDifficulty() const { return m_selectedDifficulty; }
-    PieceColor   getSelectedColor() const { return m_selectedColor; }
+    [[nodiscard]] AIDifficulty getSelectedDifficulty() const { return m_selectedDifficulty; }
+    [[nodiscard]] PieceColor   getSelectedColor() const { return m_selectedColor; }
 
 private:
     char m_fenBuffer[128];

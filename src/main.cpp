@@ -3,11 +3,16 @@
 
 int main()
 {
-    ChessView app;
+    ChessGame    game;
+    AIController aiController;
+    ChessView    app(game, aiController);
 
     quick_imgui::loop(
         "Chess Game",
         {.init = [&]() { app.init(); },
-         .loop = [&]() { app.draw(); }}
+         .loop = [&]() {
+             aiController.playAITurn(game);
+             app.draw();
+         }}
     );
 }
