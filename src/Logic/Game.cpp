@@ -1,29 +1,5 @@
 #include "Game.hpp"
 #include <cctype> // Pour toupper()
-#include "AI.hpp"
-
-ChessGame::ChessGame()
-    : m_currentTurn(PieceColor::White)
-    , m_state(GameState::Playing)
-    , m_promotionPos{-1, -1}
-    , m_vsAI(false)
-{
-}
-
-PieceColor ChessGame::getCurrentTurn() const
-{
-    return m_currentTurn;
-}
-
-const std::vector<std::string>& ChessGame::getHistory() const
-{
-    return m_history;
-}
-
-const Board& ChessGame::getBoard() const
-{
-    return m_board;
-}
 
 std::string ChessGame::toChessNotation(Position p) const
 {
@@ -268,19 +244,5 @@ void ChessGame::undo()
     if (!m_history.empty())
     {
         m_history.pop_back();
-    }
-}
-
-void ChessGame::playAITurn()
-{
-    if (m_currentTurn == m_playerColor || m_state != GameState::Playing)
-        return;
-
-    Move       aiMove;
-    PieceColor aiColor = (m_playerColor == PieceColor::White) ? PieceColor::Black : PieceColor::White;
-
-    if (AI::getBestMove(m_board, aiColor, m_aiDifficulty, aiMove))
-    {
-        move(aiMove.from, aiMove.to);
     }
 }

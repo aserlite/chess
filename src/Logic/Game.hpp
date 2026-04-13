@@ -1,8 +1,10 @@
 #pragma once
+#include <memory>
 #include <string>
 #include <vector>
-#include "AI.hpp"
 #include "Board.hpp"
+
+class IGameRule;
 
 enum class GameState {
     Playing,
@@ -19,48 +21,46 @@ struct GameSnapshot {
 
 class ChessGame {
 public:
-    ChessGame();
+    ChessGame() = default;
 
-    PieceColor                      getCurrentTurn() const;
-    const std::vector<std::string>& getHistory() const;
-    const Board&                    getBoard() const;
+    void addRule(std::shared_ptr<IGameRule> rule)
+    {
+        m_activeRules.push_back(std::move(rule));
+    }
+    void clearRules()
+    {
+        m_activeRules.clear();
+    }
 
-    GameState getState() const { return m_state; }
+    [[nodiscard]] PieceColor                      getCurrentTurn() const { return m_currentTurn; }
+    [[nodiscard]] const std::vector<std::string>& getHistory() const { return m_history; }
+    [[nodiscard]] const Board&                    getBoard() const { return m_board; }
+    [[nodiscard]] GameState                       getState() const { return m_state; }
 
-    std::string toChessNotation(Position p) const;
+    [[nodiscard]] std::string toChessNotation(Position p) const;
 
-    bool move(Position from, Position to);
-    bool isValidMove(Position from, Position to) const;
+    [[nodiscard]] bool move(Position from, Position to);
+    [[nodiscard]] bool isValidMove(Position from, Position to) const;
 
     void promotePawn(PieceType type);
 
-    std::string getFEN() const;
-    void        loadFEN(const std::string& fen);
+    [[nodiscard]] std::string getFEN() const;
+    void                      loadFEN(const std::string& fen);
 
     void undo();
 
-    bool isVsAI() const { return m_vsAI; }
-    void setVsAI(bool active) { m_vsAI = active; }
-
-    void       playAITurn();
-    void       setAIDifficulty(AIDifficulty diff) { m_aiDifficulty = diff; }
-    void       setPlayerColor(PieceColor color) { m_playerColor = color; }
-    PieceColor getPlayerColor() const { return m_playerColor; }
-
 private:
     Board                    m_board;
-    PieceColor               m_currentTurn;
+    PieceColor               m_currentTurn = PieceColor::White;
     std::vector<std::string> m_history;
 
-    GameState m_state;
-    Position  m_promotionPos;
+    GameState m_state        = GameState::Playing;
+    Position  m_promotionPos = {-1, -1};
+
+    std::vector<std::shared_ptr<IGameRule>> m_activeRules;
 
     void changeTurn();
 
     std::vector<GameSnapshot> m_backupHistory;
     void                      saveSnapshot();
-
-    bool         m_vsAI         = false;
-    AIDifficulty m_aiDifficulty = AIDifficulty::Easy;
-    PieceColor   m_playerColor  = PieceColor::White;
 };

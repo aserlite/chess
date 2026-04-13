@@ -1,6 +1,4 @@
 #include "ChessView.hpp"
-#include <fstream>
-#include <iostream>
 
 ChessView::ChessView()
     : m_appState(AppState::Menu)
@@ -21,6 +19,7 @@ void ChessView::draw()
 
         if (action == MenuAction::Start1v1)
         {
+            m_aiController.setEnabled(false);
             std::string fen = m_menu.getEnteredFEN();
             if (!fen.empty())
             {
@@ -30,14 +29,15 @@ void ChessView::draw()
         }
         else if (action == MenuAction::StartAI)
         {
-            m_game.setVsAI(true);
-            m_game.setAIDifficulty(m_menu.getSelectedDifficulty());
-            m_game.setPlayerColor(m_menu.getSelectedColor());
+            m_aiController.setEnabled(true);
+            m_aiController.setDifficulty(m_menu.getSelectedDifficulty());
+            m_aiController.setPlayerColor(m_menu.getSelectedColor());
             m_appState = AppState::Game;
         }
     }
     else
     {
+        m_aiController.playAITurn(m_game);
         m_view2D.draw(m_game);
         m_view3D.draw(m_game);
         drawInfoWindow();

@@ -52,11 +52,6 @@ void ChessView2D::draw(ChessGame& game)
 {
     ImGui::Begin("Plateau de Jeu (2D)");
 
-    if (game.isVsAI() && game.getCurrentTurn() != game.getPlayerColor() && game.getState() == GameState::Playing)
-    {
-        game.playAITurn();
-    }
-
     if (game.getCurrentTurn() == PieceColor::White)
         ImGui::TextColored(ImVec4(1, 1, 1, 1), "Trait aux BLANCS");
     else
