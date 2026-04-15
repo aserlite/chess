@@ -6,9 +6,12 @@
 #include <memory>
 #include <optional>
 #include "../Logic/Game.hpp"
-#include "BoardRenderer.hpp"
-#include "PieceRenderer.hpp"
-#include "Skybox.hpp"
+#include "3D/BoardRenderer.hpp"
+#include "3D/ICamera.hpp"
+#include "3D/PieceRenderer.hpp"
+#include "3D/PovCamera.hpp"
+#include "3D/Skybox.hpp"
+#include "3D/TrackballCamera.hpp"
 #include "ViewContext.hpp"
 
 class ChessView3D {
@@ -28,11 +31,13 @@ public:
     void draw(const ChessGame& game, ViewContext& ctx);
 
 private:
-    void      setupFramebuffer(const ImVec2& size);
-    glm::mat4 calculateCameraView(ViewContext& ctx) const;
-    void      updateAnimations(const ChessGame& game);
-    void      renderScene(const ChessGame& game, const glm::mat4& view, const glm::mat4& proj);
-    void      handleCameraInput();
+    void setupFramebuffer(const ImVec2& size);
+    void updateAnimations(const ChessGame& game);
+    void renderScene(const ChessGame& game, const glm::mat4& view, const glm::mat4& proj);
+
+    std::unique_ptr<TrackballCamera> m_trackballCam;
+    std::unique_ptr<PovCamera>       m_povCam;
+    ICamera*                         m_activeCamera = nullptr;
 
     unsigned int m_fbo     = 0;
     unsigned int m_texture = 0;
@@ -50,15 +55,6 @@ private:
 
     int m_width  = 800;
     int m_height = 600;
-
-    float m_cameraAngleX   = 0.0f;
-    float m_cameraAngleY   = 0.8f;
-    float m_cameraDistance = 10.0f;
-
-    float m_povAngleX = 0.0f;
-    float m_povAngleY = 0.0f;
-
-    bool m_isPOV = false;
 
     void setupBuffers();
     void resizeFBO(int width, int height);

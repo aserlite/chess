@@ -3,11 +3,19 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <glimac/glm.hpp>
 #include <iostream>
-#include "PieceRenderer.hpp"
-#include "Skybox.hpp"
+#include "3D/PieceRenderer.hpp"
+#include "3D/Skybox.hpp"
 
-ChessView3D::ChessView3D() = default;
+ChessView3D::ChessView3D()
+    : m_trackballCam(std::make_unique<TrackballCamera>())
+    , m_povCam(std::make_unique<PovCamera>())
+    , m_activeCamera(nullptr)
+{
+    // Now you can safely point it to the trackball
+    m_activeCamera = m_trackballCam.get();
+}
 
 ChessView3D::~ChessView3D()
 {
@@ -81,10 +89,10 @@ void ChessView3D::setupBuffers()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), nullptr);
     glEnableVertexAttribArray(0);
 
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float))); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast, performance-no-int-to-ptr)
     glEnableVertexAttribArray(1);
 
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(6 * sizeof(float)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(6 * sizeof(float))); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast, performance-no-int-to-ptr)
     glEnableVertexAttribArray(2);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -159,41 +167,6 @@ void ChessView3D::setupFramebuffer(const ImVec2& size)
     {
         resizeFBO(static_cast<int>(size.x), static_cast<int>(size.y));
     }
-}
-
-glm::mat4 ChessView3D::calculateCameraView(ViewContext& ctx) const
-{
-    glm::mat4 view{};
-    if (m_isPOV)
-    {
-        if (ctx.selectedPos.x != -1 && ctx.selectedPos.y != -1)
-        {
-            ctx.lastPOVPos = ctx.selectedPos;
-        }
-
-        const Position activePos = (ctx.lastPOVPos.x != -1) ? ctx.lastPOVPos : Position{3, 3};
-
-        const float px = static_cast<float>(activePos.x) - 3.5f;
-        const float pz = static_cast<float>(activePos.y) - 3.5f;
-
-        const glm::vec3 camPos(px, 2.0f, pz);
-
-        const float lookX = std::sin(m_povAngleX) * std::cos(m_povAngleY);
-        const float lookY = std::sin(m_povAngleY);
-        const float lookZ = std::cos(m_povAngleX) * std::cos(m_povAngleY);
-
-        view = glm::lookAt(camPos, camPos + glm::vec3(lookX, lookY, lookZ), glm::vec3(0.0f, 1.0f, 0.0f));
-    }
-    else
-    {
-        const float camX = m_cameraDistance * std::cos(m_cameraAngleY) * std::sin(m_cameraAngleX);
-        const float camY = m_cameraDistance * std::sin(m_cameraAngleY);
-        const float camZ = m_cameraDistance * std::cos(m_cameraAngleY) * std::cos(m_cameraAngleX);
-
-        view = glm::lookAt(glm::vec3(camX, camY, camZ), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    }
-
-    return view;
 }
 
 void ChessView3D::updateAnimations(const ChessGame& game)
@@ -310,37 +283,6 @@ void ChessView3D::renderScene(const ChessGame& game, const glm::mat4& view, cons
     }
 }
 
-void ChessView3D::handleCameraInput()
-{
-    if (ImGui::IsItemActive())
-    {
-        const ImGuiIO& io = ImGui::GetIO();
-
-        if (m_isPOV)
-        {
-            m_povAngleX -= io.MouseDelta.x * 0.01f;
-            m_povAngleY -= io.MouseDelta.y * 0.01f;
-            m_povAngleY = std::max(-1.55f, std::min(1.55f, m_povAngleY));
-        }
-        else
-        {
-            m_cameraAngleX -= io.MouseDelta.x * 0.01f;
-            m_cameraAngleY -= io.MouseDelta.y * 0.01f;
-            m_cameraAngleY = std::max(0.0f, std::min(1.57f, m_cameraAngleY));
-        }
-    }
-
-    if (ImGui::IsItemHovered() && !m_isPOV)
-    {
-        const ImGuiIO& io = ImGui::GetIO();
-        if (io.MouseWheel != 0.0f)
-        {
-            m_cameraDistance -= io.MouseWheel * 1.5f;
-            m_cameraDistance = std::max(2.0f, std::min(30.0f, m_cameraDistance));
-        }
-    }
-}
-
 void ChessView3D::draw(const ChessGame& game, ViewContext& ctx)
 {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
@@ -349,11 +291,28 @@ void ChessView3D::draw(const ChessGame& game, ViewContext& ctx)
 
     if (ImGui::BeginMenuBar())
     {
-        if (ImGui::MenuItem(m_isPOV ? "Trackball cam" : "POV cam"))
+        if (ImGui::MenuItem("Switch cam"))
         {
-            m_isPOV = !m_isPOV;
+            if (m_activeCamera == m_trackballCam.get())
+            {
+                m_activeCamera = m_povCam.get();
+            }
+            else
+            {
+                m_activeCamera = m_trackballCam.get();
+            }
         }
-        ImGui::EndMenuBar();
+    }
+    ImGui::EndMenuBar();
+
+    if (m_activeCamera == m_povCam.get())
+    {
+        if (ctx.selectedPos.x != -1 && ctx.selectedPos.y != -1)
+        {
+            ctx.lastPOVPos = ctx.selectedPos;
+        }
+        const Position activePos = (ctx.lastPOVPos.x != -1) ? ctx.lastPOVPos : Position{3, 3};
+        m_povCam->setTargetPosition(glm::vec3(static_cast<float>(activePos.x) - 3.5f, 2.0f, static_cast<float>(activePos.y) - 3.5f));
     }
 
     ImVec2 size = ImGui::GetContentRegionAvail();
@@ -384,7 +343,7 @@ void ChessView3D::draw(const ChessGame& game, ViewContext& ctx)
         const float aspect = static_cast<float>(m_width) / static_cast<float>(m_height);
         glm::mat4   proj   = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
 
-        glm::mat4 view = calculateCameraView(ctx);
+        glm::mat4 view = m_activeCamera->getViewMatrix();
 
         updateAnimations(game);
 
@@ -397,12 +356,19 @@ void ChessView3D::draw(const ChessGame& game, ViewContext& ctx)
         glViewport(previous_viewport.at(0), previous_viewport.at(1), previous_viewport.at(2), previous_viewport.at(3));
 
         const ImVec2 pos = ImGui::GetCursorScreenPos();
-        ImGui::Image(reinterpret_cast<void*>(static_cast<intptr_t>(m_texture)), ImVec2(static_cast<float>(m_width), static_cast<float>(m_height)), ImVec2(0, 1), ImVec2(1, 0));
+        ImGui::Image(reinterpret_cast<void*>(static_cast<intptr_t>(m_texture)), ImVec2(static_cast<float>(m_width), static_cast<float>(m_height)), ImVec2(0, 1), ImVec2(1, 0)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast, performance-no-int-to-ptr)
 
         ImGui::SetCursorScreenPos(pos);
         ImGui::InvisibleButton("##3DViewBtn", ImVec2(static_cast<float>(m_width), static_cast<float>(m_height)));
 
-        handleCameraInput();
+        if (ImGui::IsItemActive())
+        {
+            m_activeCamera->processMouseDrag(ImGui::GetIO().MouseDelta.x, ImGui::GetIO().MouseDelta.y);
+        }
+        if (ImGui::IsItemHovered())
+        {
+            m_activeCamera->processMouseScroll(ImGui::GetIO().MouseWheel);
+        }
     }
 
     ImGui::End();
