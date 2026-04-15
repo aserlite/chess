@@ -1,11 +1,13 @@
 #include "ChessView3D.hpp"
 #include <glad/glad.h>
 #include <algorithm>
+#include <array>
 #include <cmath>
-#include <cstdio>
 #include <iostream>
+#include "PieceRenderer.hpp"
+#include "Skybox.hpp"
 
-ChessView3D::ChessView3D() {}
+ChessView3D::ChessView3D() = default;
 
 ChessView3D::~ChessView3D()
 {
@@ -28,7 +30,7 @@ ChessView3D::~ChessView3D()
 
 void ChessView3D::setupBuffers()
 {
-    float vertices[] = {
+    constexpr std::array<float, 288> vertices = {
         // Back face
         -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, // Bottom-left
         0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f,  // Bottom-right
@@ -78,7 +80,7 @@ void ChessView3D::setupBuffers()
 
     glBindVertexArray(m_cubeVao);
     glBindBuffer(GL_ARRAY_BUFFER, m_cubeVbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), nullptr);
     glEnableVertexAttribArray(0);
@@ -109,12 +111,7 @@ void ChessView3D::init()
         std::cerr << "Impossible de charger les shaders 3D\n";
     }
 
-    m_models[PieceType::Pawn].load(prefixToUse + "models/pawn/pawn.obj");
-    m_models[PieceType::Rook].load(prefixToUse + "models/rook/rook.obj");
-    m_models[PieceType::Knight].load(prefixToUse + "models/knight/knight.obj");
-    m_models[PieceType::Bishop].load(prefixToUse + "models/bishop/bishop.obj");
-    m_models[PieceType::Queen].load(prefixToUse + "models/queen/queen.obj");
-    m_models[PieceType::King].load(prefixToUse + "models/king/king.obj");
+    m_pieceRenderer = std::make_unique<PieceRenderer>(prefixToUse);
 
     auto imgLight = glimac::loadImage(prefixToUse + "textures/white.png");
     if (imgLight)
@@ -184,7 +181,16 @@ void ChessView3D::draw(const ChessGame& game)
 {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
     ImGui::SetNextWindowSize(ImVec2(600, 600), ImGuiCond_FirstUseEver);
-    ImGui::Begin("Vue 3D");
+    ImGui::Begin("Vue 3D", nullptr, ImGuiWindowFlags_MenuBar);
+
+    if (ImGui::BeginMenuBar())
+    {
+        if (ImGui::MenuItem(m_isPOV ? "Trackball cam" : "POV cam"))
+        {
+            m_isPOV = !m_isPOV;
+        }
+        ImGui::EndMenuBar();
+    }
 
     ImVec2 size = ImGui::GetContentRegionAvail();
     if (size.x <= 0.0f)
@@ -294,65 +300,9 @@ void ChessView3D::draw(const ChessGame& game)
                     float pr = (p.color == PieceColor::White) ? 1.0f : 0.1f;
                     glUniform3f(uColorOverrideLoc, pr, pr, pr);
 
-                    if (m_models.count(p.type) > 0)
+                    if (m_pieceRenderer)
                     {
-                        float     scaleFactor = 0.05f;
-                        glm::vec3 offset(0.0f, 0.0f, 0.0f);
-                        float     rotationY = 0.0f;
-
-                        switch (p.type)
-                        {
-                        case PieceType::Pawn:
-                            scaleFactor = 0.1f;
-                            offset      = glm::vec3(0.0f, 0.35f, 0.0f);
-                            break;
-                        case PieceType::Rook:
-                            scaleFactor = 0.75f;
-                            offset      = glm::vec3(0.0f, 0.0f, 0.0f);
-                            break;
-                        case PieceType::Knight:
-                            scaleFactor = 0.75f;
-                            offset      = glm::vec3(0.0f, 0.0f, 0.0f);
-                            rotationY   = 180.0f;
-                            break;
-                        case PieceType::Bishop:
-                            scaleFactor = 0.75f;
-                            offset      = glm::vec3(0.0f, 0.0f, 0.0f);
-                            break;
-                        case PieceType::Queen:
-                            scaleFactor = 0.75f;
-                            offset      = glm::vec3(0.0f, 0.0f, 0.0f);
-                            break;
-                        case PieceType::King:
-                            scaleFactor = 0.75f;
-                            offset      = glm::vec3(0.0f, 0.0f, 0.0f);
-                            break;
-                        default: break;
-                        }
-
-                        glm::mat4 pModel = glm::translate(glm::mat4(1.0f), glm::vec3(wx, 0.0f, wz) + offset);
-                        pModel           = glm::scale(pModel, glm::vec3(scaleFactor, scaleFactor, scaleFactor));
-                        if (rotationY != 0.0f)
-                        {
-                            pModel = glm::rotate(pModel, glm::radians(rotationY), glm::vec3(0.0f, 1.0f, 0.0f));
-                        }
-
-                        if (p.color == PieceColor::Black)
-                        {
-                            pModel = glm::rotate(pModel, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-                        }
-
-                        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(pModel));
-                        m_models.at(p.type).draw();
-                    }
-                    else
-                    {
-                        glBindVertexArray(m_cubeVao);
-                        glm::mat4 pModel = glm::translate(glm::mat4(1.0f), glm::vec3(wx, 0.35f, wz));
-                        pModel           = glm::scale(pModel, glm::vec3(0.5f, 0.7f, 0.5f));
-                        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(pModel));
-
-                        glDrawArrays(GL_TRIANGLES, 0, 36);
+                        m_pieceRenderer->draw(p, wx, wz, modelLoc, m_cubeVao);
                     }
                 }
             }

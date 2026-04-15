@@ -6,7 +6,7 @@
 #include <map>
 #include <memory>
 #include "../Logic/Game.hpp"
-#include "Model3D.hpp"
+#include "PieceRenderer.hpp"
 #include "Skybox.hpp"
 
 class ChessView3D {
@@ -30,7 +30,7 @@ private:
     unsigned int m_cubeVao = 0;
     unsigned int m_cubeVbo = 0;
 
-    std::map<PieceType, Model3D> m_models;
+    std::unique_ptr<PieceRenderer> m_pieceRenderer;
     std::unique_ptr<Skybox>      m_skybox;
 
     int m_width  = 800;
@@ -39,6 +39,8 @@ private:
     float m_cameraAngleX   = 0.0f;
     float m_cameraAngleY   = 0.8f;
     float m_cameraDistance = 10.0f;
+
+    bool m_isPOV = false;
 
     void setupBuffers();
     void resizeFBO(int width, int height);
