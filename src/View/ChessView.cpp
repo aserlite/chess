@@ -120,11 +120,11 @@ void ChessView::drawInfoWindow()
     for (size_t i = 0; i < history.size(); ++i)
     {
         if (i % 2 == 0)
-            ImGui::Text("%d. %s", (int)(i / 2) + 1, history[i].c_str());
+            ImGui::Text("%d. %s", (int)(i / 2) + 1, history[i].description.c_str());
         else
         {
             ImGui::SameLine();
-            ImGui::Text("%s", history[i].c_str());
+            ImGui::Text("%s", history[i].description.c_str());
         }
 
         if (ImGui::GetScrollY() >= ImGui::GetScrollMaxY())

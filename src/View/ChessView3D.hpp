@@ -5,6 +5,7 @@
 #include <glimac/glm.hpp>
 #include <map>
 #include <memory>
+#include <optional>
 #include "../Logic/Game.hpp"
 #include "BoardRenderer.hpp"
 #include "PieceRenderer.hpp"
@@ -48,4 +49,14 @@ private:
 
     void setupBuffers();
     void resizeFBO(int width, int height);
+
+    struct MoveAnimation {
+        Position from;
+        Position to;
+        Piece    piece;
+        float    progress = 0.0f;
+    };
+
+    std::optional<MoveAnimation> m_activeAnim;
+    size_t m_lastHistorySize = 0;
 };

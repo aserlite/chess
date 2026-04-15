@@ -26,7 +26,7 @@ bool ChessGame::move(Position from, Position to)
             {
                 m_lastFeedback = "Bloqué par: " + rule->getRuleName() + " !";
                 saveSnapshot();
-                m_history.push_back("Chaos (" + toChessNotation(from) + toChessNotation(to) + ")");
+                m_history.push_back({from, to, "Chaos (" + toChessNotation(from) + toChessNotation(to) + ")", false});
                 changeTurn();
                 return true;
             }
@@ -51,7 +51,7 @@ bool ChessGame::move(Position from, Position to)
             m_board.setPiece(to.x, to.y, p);
             m_board.setPiece(from.x, from.y, Piece{PieceType::None, PieceColor::None});
 
-            m_history.push_back(toChessNotation(from) + toChessNotation(to) + "#");
+            m_history.push_back({from, to, toChessNotation(from) + toChessNotation(to) + "#", true});
             return true;
         }
 
@@ -71,7 +71,7 @@ bool ChessGame::move(Position from, Position to)
             return true;
         }
 
-        m_history.push_back(moveStr);
+        m_history.push_back({from, to, moveStr, true});
         changeTurn();
         return true;
     }
@@ -97,7 +97,7 @@ void ChessGame::promotePawn(PieceType type)
     else
         promoChar = "n";
 
-    m_history.push_back("promotion=" + promoChar);
+    m_history.push_back({{-1, -1}, m_promotionPos, "promotion=" + promoChar, false});
 
     m_state        = GameState::Playing;
     m_promotionPos = {-1, -1};

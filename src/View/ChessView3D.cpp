@@ -252,12 +252,69 @@ void ChessView3D::draw(const ChessGame& game, ViewContext& ctx)
 
         glUniform1i(uHasTextureLoc, 0);
 
+        // Detect new moves and spawn animations
+        const auto& history = game.getHistory();
+        if (history.size() > m_lastHistorySize)
+        {
+            const auto& latest = history.back();
+            if (latest.actuallyMoved && latest.from.x != -1)
+            {
+                MoveAnimation anim;
+                anim.from     = latest.from;
+                anim.to       = latest.to;
+                anim.piece    = board.getPiece(latest.to.x, latest.to.y);
+                anim.progress = 0.0f;
+                m_activeAnim  = anim;
+            }
+            m_lastHistorySize = history.size();
+        }
+        else if (history.size() < m_lastHistorySize)
+        {
+            // Undo happened, cancel animation
+            m_activeAnim.reset();
+            m_lastHistorySize = history.size();
+        }
+
+        // Tick animation
+        constexpr float animDuration = 0.4f;
+        if (m_activeAnim)
+        {
+            m_activeAnim->progress += ImGui::GetIO().DeltaTime / animDuration;
+            if (m_activeAnim->progress >= 1.0f)
+            {
+                m_activeAnim.reset();
+            }
+        }
+
         for (int y = 0; y < 8; ++y)
         {
             for (int x = 0; x < 8; ++x)
             {
                 const Piece& p = board.getPiece(x, y);
-                if (!p.isEmpty())
+                if (p.isEmpty())
+                    continue;
+
+                // If this tile is the animation destination, draw at interpolated position
+                if (m_activeAnim && x == m_activeAnim->to.x && y == m_activeAnim->to.y)
+                {
+                    float t = m_activeAnim->progress;
+                    float fromX = static_cast<float>(m_activeAnim->from.x) - 3.5f;
+                    float fromZ = static_cast<float>(m_activeAnim->from.y) - 3.5f;
+                    float toX   = static_cast<float>(m_activeAnim->to.x)   - 3.5f;
+                    float toZ   = static_cast<float>(m_activeAnim->to.y)   - 3.5f;
+
+                    float wx = fromX + (toX - fromX) * t;
+                    float wz = fromZ + (toZ - fromZ) * t;
+
+                    float pr = (p.color == PieceColor::White) ? 1.0f : 0.1f;
+                    glUniform3f(uColorOverrideLoc, pr, pr, pr);
+
+                    if (m_pieceRenderer)
+                    {
+                        m_pieceRenderer->draw(p, wx, wz, modelLoc, m_cubeVao);
+                    }
+                }
+                else
                 {
                     float wx = static_cast<float>(x) - 3.5f;
                     float wz = static_cast<float>(y) - 3.5f;
