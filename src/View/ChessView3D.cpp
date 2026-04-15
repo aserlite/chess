@@ -174,17 +174,17 @@ void ChessView3D::draw(const ChessGame& game, ViewContext& ctx)
     if (size.y <= 0.0f)
         size.y = 600.0f;
 
-    if (m_fbo == 0 || size.x != m_width || size.y != m_height)
+    if (m_fbo == 0 || size.x != static_cast<float>(m_width) || size.y != static_cast<float>(m_height))
     {
         resizeFBO(static_cast<int>(size.x), static_cast<int>(size.y));
     }
 
     if (m_fbo && size.x > 0 && size.y > 0)
     {
-        GLint previous_fbo;
+        GLint previous_fbo{};
         glGetIntegerv(GL_FRAMEBUFFER_BINDING, &previous_fbo);
-        GLint previous_viewport[4];
-        glGetIntegerv(GL_VIEWPORT, previous_viewport);
+        std::array<GLint, 4> previous_viewport{};
+        glGetIntegerv(GL_VIEWPORT, previous_viewport.data());
 
         glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
         glViewport(0, 0, m_width, m_height);
@@ -211,7 +211,7 @@ void ChessView3D::draw(const ChessGame& game, ViewContext& ctx)
 
             float px = static_cast<float>(activePos.x) - 3.5f;
             float pz = static_cast<float>(activePos.y) - 3.5f;
-            
+
             glm::vec3 camPos(px, 2.0f, pz);
 
             float lookX = std::sin(m_povAngleX) * std::cos(m_povAngleY);
@@ -230,13 +230,13 @@ void ChessView3D::draw(const ChessGame& game, ViewContext& ctx)
         }
 
         unsigned int progId            = m_program ? m_program->getGLId() : 0;
-        unsigned int projLoc           = glGetUniformLocation(progId, "projection");
-        unsigned int viewLoc           = glGetUniformLocation(progId, "view");
-        unsigned int modelLoc          = glGetUniformLocation(progId, "model");
-        unsigned int uColorOverrideLoc = glGetUniformLocation(progId, "uColorOverride");
-        unsigned int uUseOverrideLoc   = glGetUniformLocation(progId, "uUseOverride");
-        unsigned int uTextureLoc       = glGetUniformLocation(progId, "uTexture");
-        unsigned int uHasTextureLoc    = glGetUniformLocation(progId, "uHasTexture");
+        GLint        projLoc           = glGetUniformLocation(progId, "projection");
+        GLint        viewLoc           = glGetUniformLocation(progId, "view");
+        GLint        modelLoc          = glGetUniformLocation(progId, "model");
+        GLint        uColorOverrideLoc = glGetUniformLocation(progId, "uColorOverride");
+        GLint        uUseOverrideLoc   = glGetUniformLocation(progId, "uUseOverride");
+        GLint        uTextureLoc       = glGetUniformLocation(progId, "uTexture");
+        GLint        uHasTextureLoc    = glGetUniformLocation(progId, "uHasTexture");
 
         glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(proj));
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
@@ -297,11 +297,11 @@ void ChessView3D::draw(const ChessGame& game, ViewContext& ctx)
                 // If this tile is the animation destination, draw at interpolated position
                 if (m_activeAnim && x == m_activeAnim->to.x && y == m_activeAnim->to.y)
                 {
-                    float t = m_activeAnim->progress;
+                    float t     = m_activeAnim->progress;
                     float fromX = static_cast<float>(m_activeAnim->from.x) - 3.5f;
                     float fromZ = static_cast<float>(m_activeAnim->from.y) - 3.5f;
-                    float toX   = static_cast<float>(m_activeAnim->to.x)   - 3.5f;
-                    float toZ   = static_cast<float>(m_activeAnim->to.y)   - 3.5f;
+                    float toX   = static_cast<float>(m_activeAnim->to.x) - 3.5f;
+                    float toZ   = static_cast<float>(m_activeAnim->to.y) - 3.5f;
 
                     float wx = fromX + (toX - fromX) * t;
                     float wz = fromZ + (toZ - fromZ) * t;
@@ -339,7 +339,7 @@ void ChessView3D::draw(const ChessGame& game, ViewContext& ctx)
         glDisable(GL_DEPTH_TEST);
 
         glBindFramebuffer(GL_FRAMEBUFFER, previous_fbo);
-        glViewport(previous_viewport[0], previous_viewport[1], previous_viewport[2], previous_viewport[3]);
+        glViewport(previous_viewport.at(0), previous_viewport.at(1), previous_viewport.at(2), previous_viewport.at(3));
 
         ImVec2 pos = ImGui::GetCursorScreenPos();
         ImGui::Image(reinterpret_cast<void*>(static_cast<intptr_t>(m_texture)), ImVec2(static_cast<float>(m_width), static_cast<float>(m_height)), ImVec2(0, 1), ImVec2(1, 0));
@@ -350,14 +350,14 @@ void ChessView3D::draw(const ChessGame& game, ViewContext& ctx)
         if (ImGui::IsItemActive())
         {
             ImGuiIO& io = ImGui::GetIO();
-            
-            if (m_isPOV) 
+
+            if (m_isPOV)
             {
                 m_povAngleX -= io.MouseDelta.x * 0.01f;
                 m_povAngleY -= io.MouseDelta.y * 0.01f;
                 m_povAngleY = std::max(-1.55f, std::min(1.55f, m_povAngleY));
-            } 
-            else 
+            }
+            else
             {
                 m_cameraAngleX -= io.MouseDelta.x * 0.01f;
                 m_cameraAngleY -= io.MouseDelta.y * 0.01f;

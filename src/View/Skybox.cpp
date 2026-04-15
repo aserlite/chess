@@ -41,7 +41,7 @@ Skybox::Skybox(const std::string& shaderPrefix, const std::vector<std::string>& 
         auto image = glimac::loadImage(facesPaths[i]);
         if (image)
         {
-            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA, image->getWidth(), image->getHeight(), 0, GL_RGBA, GL_FLOAT, image->getPixels());
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA, static_cast<GLsizei>(image->getWidth()), static_cast<GLsizei>(image->getHeight()), 0, GL_RGBA, GL_FLOAT, image->getPixels());
         }
         else
         {

@@ -12,7 +12,7 @@ PieceRenderer::PieceRenderer(const std::string& prefixToUse)
     m_models[PieceType::King].load(prefixToUse + "models/king/king.obj");
 }
 
-void PieceRenderer::draw(const Piece& p, float wx, float wz, unsigned int modelLoc, unsigned int fallbackVao)
+void PieceRenderer::draw(const Piece& p, float wx, float wz, GLint modelLoc, GLuint fallbackVao)
 {
     if (m_models.count(p.type) > 0)
     {
@@ -52,7 +52,7 @@ void PieceRenderer::draw(const Piece& p, float wx, float wz, unsigned int modelL
 
         glm::mat4 pModel = glm::translate(glm::mat4(1.0f), glm::vec3(wx, 0.0f, wz) + offset);
         pModel           = glm::scale(pModel, glm::vec3(scaleFactor, scaleFactor, scaleFactor));
-        
+
         if (rotationY != 0.0f)
         {
             pModel = glm::rotate(pModel, glm::radians(rotationY), glm::vec3(0.0f, 1.0f, 0.0f));

@@ -25,7 +25,7 @@ GLuint BoardRenderer::loadTexture(const std::string& path)
     {
         glGenTextures(1, &textureId);
         glBindTexture(GL_TEXTURE_2D, textureId);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img->getWidth(), img->getHeight(), 0, GL_RGBA, GL_FLOAT, img->getPixels());
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, static_cast<GLsizei>(img->getWidth()), static_cast<GLsizei>(img->getHeight()), 0, GL_RGBA, GL_FLOAT, img->getPixels());
         glGenerateMipmap(GL_TEXTURE_2D);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -33,7 +33,7 @@ GLuint BoardRenderer::loadTexture(const std::string& path)
     return textureId;
 }
 
-void BoardRenderer::draw(GLuint modelLoc, GLuint uColorOverrideLoc, GLuint uUseOverrideLoc, GLuint uHasTextureLoc, GLuint uTextureLoc, GLuint cubeVao)
+void BoardRenderer::draw(GLint modelLoc, GLint uColorOverrideLoc, GLint uUseOverrideLoc, GLint uHasTextureLoc, GLint uTextureLoc, GLuint cubeVao)
 {
     glBindVertexArray(cubeVao);
 

@@ -4,8 +4,8 @@
 
 std::string ChessGame::toChessNotation(Position p) const
 {
-    char file = 'a' + p.x;
-    char rank = '8' - p.y;
+    char file = static_cast<char>('a' + p.x);
+    char rank = static_cast<char>('8' - p.y);
     return std::string(1, file) + std::string(1, rank);
 }
 
@@ -157,7 +157,7 @@ std::string ChessGame::getFEN() const
 
                 if (p.color == PieceColor::White)
                 {
-                    c = std::toupper(c);
+                    c = static_cast<char>(std::toupper(c));
                 }
                 fen += c;
             }
@@ -217,7 +217,7 @@ void ChessGame::loadFEN(const std::string& fen)
         {
             PieceColor color  = isupper(c) ? PieceColor::White : PieceColor::Black;
             PieceType  type   = PieceType::None;
-            char       lowerC = tolower(c);
+            char       lowerC = static_cast<char>(tolower(c));
 
             switch (lowerC)
             {

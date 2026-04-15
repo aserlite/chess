@@ -18,7 +18,7 @@ public:
     BoardRenderer(BoardRenderer&&)            = default;
     BoardRenderer& operator=(BoardRenderer&&) = default;
 
-    void draw(GLuint modelLoc, GLuint uColorOverrideLoc, GLuint uUseOverrideLoc, GLuint uHasTextureLoc, GLuint uTextureLoc, GLuint cubeVao);
+    void draw(GLint modelLoc, GLint uColorOverrideLoc, GLint uUseOverrideLoc, GLint uHasTextureLoc, GLint uTextureLoc, GLuint cubeVao);
 
 private:
     GLuint m_textureLightTile = 0;
