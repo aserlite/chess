@@ -1,6 +1,6 @@
 #include "BernoulliRule.hpp"
-#include <sstream>
 #include <iomanip>
+#include <sstream>
 
 BernoulliRule::BernoulliRule(double probability)
     : m_probability(probability)

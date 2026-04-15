@@ -8,6 +8,7 @@
 
 class IGameRule {
 public:
+    IGameRule()          = default;
     virtual ~IGameRule() = default;
 
     // Prevent copying (no need to copy anyway)
