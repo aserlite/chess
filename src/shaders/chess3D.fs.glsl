@@ -1,14 +1,25 @@
 #version 330 core
-in vec3 vertexColor;
+in vec3 FragPos;
+in vec3 Normal;
+in vec2 TexCoords;
+
 out vec4 FragColor;
 
 uniform vec3 uColorOverride;
 uniform bool uUseOverride;
 
 void main() {
-    if (uUseOverride) {
-        FragColor = vec4(uColorOverride, 1.0);
-    } else {
-        FragColor = vec4(vertexColor, 1.0);
-    }
+    vec3 baseColor = uUseOverride ? uColorOverride : vec3(0.8);
+    
+    // Ambient
+    vec3 ambient = 0.4 * baseColor;
+    
+    // Diffuse
+    vec3 norm = normalize(Normal);
+    vec3 lightDir = normalize(vec3(0.5, 1.0, 0.3)); // Simple direction
+    float diff = max(dot(norm, lightDir), 0.0);
+    vec3 diffuse = diff * 0.7 * baseColor;
+    
+    vec3 result = ambient + diffuse;
+    FragColor = vec4(result, 1.0);
 }

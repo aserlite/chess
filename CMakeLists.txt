@@ -15,9 +15,9 @@ project(chess)
 
 add_executable(${PROJECT_NAME})
 
-    set_target_properties(${PROJECT_NAME} PROPERTIES
+set_target_properties(${PROJECT_NAME} PROPERTIES
     CXX_CLANG_TIDY "clang-tidy"
-    )
+)
 
 # Choose your C++ version
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
