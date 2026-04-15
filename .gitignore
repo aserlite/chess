@@ -6,3 +6,5 @@ imgui.ini
 compile_commands.json
 diagrams
 
+assets/.DS_Store
+.DS_Store
