@@ -1,4 +1,5 @@
 #include "Skybox.hpp"
+#include <array>
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 
@@ -10,7 +11,7 @@ Skybox::Skybox(const std::string& shaderPrefix, const std::vector<std::string>& 
 
     m_program = std::make_unique<glimac::Program>(glimac::loadProgram(vs.c_str(), fs.c_str()));
 
-    float skyboxVertices[] = {
+    constexpr std::array<float, 108> skyboxVertices = {
         -1.0f, 1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f, -1.0f, -1.0f,
         1.0f, -1.0f, -1.0f, 1.0f, 1.0f, -1.0f, -1.0f, 1.0f, -1.0f,
         -1.0f, -1.0f, 1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 1.0f, -1.0f,
@@ -29,7 +30,7 @@ Skybox::Skybox(const std::string& shaderPrefix, const std::vector<std::string>& 
     glGenBuffers(1, &m_vbo);
     glBindVertexArray(m_vao);
     glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, skyboxVertices.size() * sizeof(float), skyboxVertices.data(), GL_STATIC_DRAW);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 
