@@ -8,6 +8,16 @@
 
 class IGameRule {
 public:
+    virtual ~IGameRule() = default;
+
+    // Prevent copying (no need to copy anyway)
+    IGameRule(const IGameRule&)            = delete;
+    IGameRule& operator=(const IGameRule&) = delete;
+
+    // Delete moving (same)
+    IGameRule(IGameRule&&)            = delete;
+    IGameRule& operator=(IGameRule&&) = delete;
+
     virtual bool overrideMove(Board& /*board*/, Position /*from*/, Position /*to*/) { return false; }
 
     virtual void onTurnStart(Board& /*board*/, PieceColor /*turn*/) {}
