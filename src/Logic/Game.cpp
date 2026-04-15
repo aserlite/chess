@@ -1,5 +1,8 @@
 #include "Game.hpp"
+#include "IGameRule.hpp"
 #include <cctype> // Pour toupper()
+
+ChessGame::~ChessGame() = default;
 
 std::string ChessGame::toChessNotation(Position p) const
 {
@@ -10,13 +13,36 @@ std::string ChessGame::toChessNotation(Position p) const
 
 bool ChessGame::move(Position from, Position to)
 {
+    m_lastFeedback.clear();
+
     if (m_state != GameState::Playing)
         return false;
 
     if (m_board.isMoveValid(from, to) && m_board.getPiece(from.x, from.y).color == m_currentTurn)
     {
+        for (const auto& rule : m_activeRules)
+        {
+            if (rule->overrideMove(m_board, from, to))
+            {
+                m_lastFeedback = "Bloqué par: " + rule->getRuleName() + " !";
+                saveSnapshot();
+                m_history.push_back("Chaos (" + toChessNotation(from) + toChessNotation(to) + ")");
+                changeTurn();
+                return true;
+            }
+        }
+
         saveSnapshot();
         Piece target = m_board.getPiece(to.x, to.y);
+
+        if (!target.isEmpty())
+        {
+            for (const auto& rule : m_activeRules)
+            {
+                rule->onPieceCaptured(m_board, to);
+            }
+        }
+
         if (target.type == PieceType::King)
         {
             m_state = (m_currentTurn == PieceColor::White) ? GameState::WhiteWins : GameState::BlackWins;
@@ -89,6 +115,11 @@ bool ChessGame::isValidMove(Position from, Position to) const
 void ChessGame::changeTurn()
 {
     m_currentTurn = (m_currentTurn == PieceColor::White) ? PieceColor::Black : PieceColor::White;
+
+    for (const auto& rule : m_activeRules)
+    {
+        rule->onTurnStart(m_board, m_currentTurn);
+    }
 }
 
 std::string ChessGame::getFEN() const

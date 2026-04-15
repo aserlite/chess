@@ -1,5 +1,7 @@
 #include "ChessView.hpp"
 #include <array>
+#include <memory>
+#include "../Logic/IGameRule.hpp"
 
 ChessView::ChessView(ChessGame& game, AIController& aiController)
     : m_game(game)
@@ -32,6 +34,16 @@ void ChessView::draw()
             {
                 m_game.loadFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
             }
+
+            m_game.clearRules();
+            for (auto& factory : RuleRegistry::getFactories())
+            {
+                if (factory.enabled)
+                {
+                    m_game.addRule(factory.create());
+                }
+            }
+
             m_appState = AppState::Game;
         }
         else if (action == MenuAction::StartAI)
@@ -48,6 +60,16 @@ void ChessView::draw()
             {
                 m_game.loadFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
             }
+
+            m_game.clearRules();
+            for (auto& factory : RuleRegistry::getFactories())
+            {
+                if (factory.enabled)
+                {
+                    m_game.addRule(factory.create());
+                }
+            }
+
             m_appState = AppState::Game;
         }
     }
@@ -56,6 +78,7 @@ void ChessView::draw()
         bool quit = m_view2D.draw(m_game);
         m_view3D.draw(m_game);
         drawInfoWindow();
+        drawChaosWindow();
 
         if (quit)
         {
@@ -69,7 +92,7 @@ void ChessView::drawInfoWindow()
     ImGui::Begin("Infos Partie");
 
     ImGui::Text("FEN:");
-    std::string fen = m_game.getFEN();
+    std::string           fen = m_game.getFEN();
     std::array<char, 256> fenBuffer{};
     std::strncpy(fenBuffer.data(), fen.c_str(), fenBuffer.size() - 1);
     fenBuffer[fenBuffer.size() - 1] = '\0';
@@ -109,5 +132,30 @@ void ChessView::drawInfoWindow()
     }
 
     ImGui::EndChild();
+    ImGui::End();
+}
+
+void ChessView::drawChaosWindow()
+{
+    const auto& rules = m_game.getActiveRules();
+    if (rules.empty())
+        return;
+
+    ImGui::Begin("Infos mode Chaos");
+
+    std::string feedback = m_game.getLastFeedback();
+    if (!feedback.empty())
+    {
+        ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "Action refusée :");
+        ImGui::TextWrapped("%s", feedback.c_str());
+        ImGui::Separator();
+    }
+
+    ImGui::Text("Modes Actifs :");
+    for (const auto& r : rules)
+    {
+        ImGui::BulletText("%s (%s)", r->getRuleName().c_str(), r->getMathStats().c_str());
+    }
+
     ImGui::End();
 }

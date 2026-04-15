@@ -30,4 +30,5 @@ private:
     ChessView3D m_view3D;
 
     void drawInfoWindow();
+    void drawChaosWindow();
 };

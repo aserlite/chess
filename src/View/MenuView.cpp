@@ -1,4 +1,5 @@
 #include "MenuView.hpp"
+#include "../Logic/IGameRule.hpp"
 #include <cstring>
 
 MenuView::MenuView()
@@ -45,6 +46,14 @@ MenuAction MenuView::draw()
     ImGui::Text("Charger une partie (FEN) :");
 
     ImGui::InputText("##fen", m_fenBuffer, sizeof(m_fenBuffer));
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Text("Modes Chaos Disponibles :");
+    for (auto& factory : RuleRegistry::getFactories())
+    {
+        ImGui::Checkbox(factory.name.c_str(), &factory.enabled);
+    }
 
     if (m_showAIConfigPopup)
     {

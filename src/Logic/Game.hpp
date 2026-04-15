@@ -3,8 +3,7 @@
 #include <string>
 #include <vector>
 #include "Board.hpp"
-
-class IGameRule;
+#include "IGameRule.hpp"
 
 enum class GameState {
     Playing,
@@ -22,8 +21,9 @@ struct GameSnapshot {
 class ChessGame {
 public:
     ChessGame() = default;
+    ~ChessGame();
 
-    void addRule(std::shared_ptr<IGameRule> rule)
+    void addRule(std::unique_ptr<IGameRule> rule)
     {
         m_activeRules.push_back(std::move(rule));
     }
@@ -32,8 +32,11 @@ public:
         m_activeRules.clear();
     }
 
+    [[nodiscard]] const std::vector<std::unique_ptr<IGameRule>>& getActiveRules() const { return m_activeRules; }
+
     [[nodiscard]] PieceColor                      getCurrentTurn() const { return m_currentTurn; }
     [[nodiscard]] const std::vector<std::string>& getHistory() const { return m_history; }
+    [[nodiscard]] const std::string&              getLastFeedback() const { return m_lastFeedback; }
     [[nodiscard]] const Board&                    getBoard() const { return m_board; }
     [[nodiscard]] GameState                       getState() const { return m_state; }
 
@@ -53,11 +56,12 @@ private:
     Board                    m_board;
     PieceColor               m_currentTurn = PieceColor::White;
     std::vector<std::string> m_history;
+    std::string              m_lastFeedback;
 
     GameState m_state        = GameState::Playing;
     Position  m_promotionPos = {-1, -1};
 
-    std::vector<std::shared_ptr<IGameRule>> m_activeRules;
+    std::vector<std::unique_ptr<IGameRule>> m_activeRules;
 
     void changeTurn();
 
