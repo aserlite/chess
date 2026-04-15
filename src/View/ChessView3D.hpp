@@ -3,10 +3,11 @@
 #include <imgui.h>
 #include <glimac/Program.hpp>
 #include <glimac/glm.hpp>
-#include <memory>
 #include <map>
+#include <memory>
 #include "../Logic/Game.hpp"
 #include "Model3D.hpp"
+#include "Skybox.hpp"
 
 class ChessView3D {
 public:
@@ -27,6 +28,7 @@ private:
     unsigned int m_cubeVbo = 0;
 
     std::map<PieceType, Model3D> m_models;
+    std::unique_ptr<Skybox>      m_skybox;
 
     int m_width  = 800;
     int m_height = 600;

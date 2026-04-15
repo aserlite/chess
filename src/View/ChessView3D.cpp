@@ -91,21 +91,26 @@ void ChessView3D::setupBuffers()
 
 void ChessView3D::init()
 {
-    const char* prefixes[] = {
-        "src/shaders/chess3D.",
-        "../src/shaders/chess3D.",
-        "../../src/shaders/chess3D."
+    const char* shader_prefixes[] = {
+        "src/shaders/",
+        "../src/shaders/",
+        "../../src/shaders/"
     };
 
-    bool loaded = false;
-    for (const char* prefix : prefixes)
+    std::string shaderPrefixToUse = "src/shaders/";
+    bool        loaded            = false;
+
+    for (const char* prefix : shader_prefixes)
     {
         try
         {
-            std::string vs = std::string(prefix) + "vs.glsl";
-            std::string fs = std::string(prefix) + "fs.glsl";
+            // Test if the main shader exists here
+            std::string vs = std::string(prefix) + "chess3D.vs.glsl";
+            std::string fs = std::string(prefix) + "chess3D.fs.glsl";
             m_program      = std::make_unique<glimac::Program>(glimac::loadProgram(vs.c_str(), fs.c_str()));
-            loaded         = true;
+
+            shaderPrefixToUse = prefix; // Save the working prefix!
+            loaded            = true;
             break;
         }
         catch (...)
@@ -115,20 +120,18 @@ void ChessView3D::init()
     }
 
     if (!loaded)
-    {
         std::cerr << "Impossible de charger les shaders 3D\n";
-    }
 
     const char* asset_prefixes[] = {
-        "assets/models/",
-        "../assets/models/",
-        "../../assets/models/"
+        "assets/",
+        "../assets/",
+        "../../assets/"
     };
 
-    std::string prefixToUse = "assets/models/";
+    std::string prefixToUse = "assets/";
     for (const char* prefix : asset_prefixes)
     {
-        std::string testPath = std::string(prefix) + "pawn/pawn.obj";
+        std::string testPath = std::string(prefix) + "models/pawn/pawn.obj";
         FILE*       f        = fopen(testPath.c_str(), "r");
         if (f)
         {
@@ -138,15 +141,25 @@ void ChessView3D::init()
         }
     }
 
-    m_models[PieceType::Pawn].load(prefixToUse + "pawn/pawn.obj");
-    m_models[PieceType::Rook].load(prefixToUse + "rook/rook.obj");
-    m_models[PieceType::Knight].load(prefixToUse + "knight/knight.obj");
-    m_models[PieceType::Bishop].load(prefixToUse + "bishop/bishop.obj");
-    m_models[PieceType::Queen].load(prefixToUse + "queen/queen.obj");
-    m_models[PieceType::King].load(prefixToUse + "king/king.obj");
+    m_models[PieceType::Pawn].load(prefixToUse + "models/pawn/pawn.obj");
+    m_models[PieceType::Rook].load(prefixToUse + "models/rook/rook.obj");
+    m_models[PieceType::Knight].load(prefixToUse + "models/knight/knight.obj");
+    m_models[PieceType::Bishop].load(prefixToUse + "models/bishop/bishop.obj");
+    m_models[PieceType::Queen].load(prefixToUse + "models/queen/queen.obj");
+    m_models[PieceType::King].load(prefixToUse + "models/king/king.obj");
 
     setupBuffers();
     resizeFBO(m_width, m_height);
+
+    std::vector<std::string> faces = {
+        prefixToUse + "skyboxes/night/right.png",
+        prefixToUse + "skyboxes/night/left.png",
+        prefixToUse + "skyboxes/night/top.png",
+        prefixToUse + "skyboxes/night/bottom.png",
+        prefixToUse + "skyboxes/night/front.png",
+        prefixToUse + "skyboxes/night/back.png"
+    };
+    m_skybox = std::make_unique<Skybox>(shaderPrefixToUse, faces);
 }
 
 void ChessView3D::resizeFBO(int width, int height)
@@ -345,6 +358,11 @@ void ChessView3D::draw(const ChessGame& game)
             }
         }
 
+        if (m_skybox)
+        {
+            m_skybox->render(proj, view);
+        }
+
         glBindVertexArray(0);
         glDisable(GL_DEPTH_TEST);
 
@@ -363,7 +381,7 @@ void ChessView3D::draw(const ChessGame& game)
             m_cameraAngleX -= io.MouseDelta.x * 0.01f;
             m_cameraAngleY -= io.MouseDelta.y * 0.01f;
 
-            m_cameraAngleY = std::max(0.1f, std::min(1.57f, m_cameraAngleY));
+            m_cameraAngleY = std::max(-1.0f, std::min(1.57f, m_cameraAngleY));
         }
 
         if (ImGui::IsItemHovered())
