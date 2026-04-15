@@ -56,5 +56,5 @@ public:
         {                                           \
             RuleRegistry::registerRule<Type>(Name); \
         }                                           \
-    } registerer_##Type;                            \
+    } const registerer_##Type;                      \
     }
