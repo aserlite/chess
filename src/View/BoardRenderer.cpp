@@ -66,17 +66,17 @@ void BoardRenderer::draw(GLint modelLoc, GLint uColorOverrideLoc, GLint uUseOver
     {
         for (int x = 0; x < 8; ++x)
         {
-            bool isDark = (x + y) % 2 != 0;
+            const bool isDark = (x + y) % 2 != 0;
 
-            float wx = static_cast<float>(x) - 3.5f;
-            float wz = static_cast<float>(y) - 3.5f;
+            const float wx = static_cast<float>(x) - 3.5f;
+            const float wz = static_cast<float>(y) - 3.5f;
 
             glBindVertexArray(cubeVao);
             glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(wx, -0.05f, wz));
             model           = glm::scale(model, glm::vec3(1.0f, 0.1f, 1.0f));
             glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
-            GLuint tileTex = isDark ? m_textureDarkTile : m_textureLightTile;
+            const GLuint tileTex = isDark ? m_textureDarkTile : m_textureLightTile;
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, tileTex);
             glUniform1i(uTextureLoc, 0);

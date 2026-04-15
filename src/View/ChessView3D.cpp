@@ -93,11 +93,11 @@ void ChessView3D::setupBuffers()
 
 void ChessView3D::init()
 {
-    std::string shaderPrefixToUse = "src/shaders/";
-    std::string prefixToUse       = "assets/";
+    const std::string shaderPrefixToUse = "src/shaders/";
+    const std::string prefixToUse       = "assets/";
 
-    std::string vs = shaderPrefixToUse + "chess3D.vs.glsl";
-    std::string fs = shaderPrefixToUse + "chess3D.fs.glsl";
+    const std::string vs = shaderPrefixToUse + "chess3D.vs.glsl";
+    const std::string fs = shaderPrefixToUse + "chess3D.fs.glsl";
     try
     {
         m_program = std::make_unique<glimac::Program>(glimac::loadProgram(vs.c_str(), fs.c_str()));
@@ -113,7 +113,7 @@ void ChessView3D::init()
     setupBuffers();
     resizeFBO(m_width, m_height);
 
-    std::vector<std::string> faces = {
+    const std::vector<std::string> faces = {
         prefixToUse + "skyboxes/night/right.png",
         prefixToUse + "skyboxes/night/left.png",
         prefixToUse + "skyboxes/night/top.png",
@@ -196,7 +196,7 @@ void ChessView3D::draw(const ChessGame& game, ViewContext& ctx)
         if (m_program)
             m_program->use();
 
-        float     aspect = static_cast<float>(m_width) / static_cast<float>(m_height);
+        const float     aspect = static_cast<float>(m_width) / static_cast<float>(m_height);
         glm::mat4 proj   = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
 
         glm::mat4 view;
@@ -207,36 +207,36 @@ void ChessView3D::draw(const ChessGame& game, ViewContext& ctx)
                 ctx.lastPOVPos = ctx.selectedPos;
             }
 
-            Position activePos = (ctx.lastPOVPos.x != -1) ? ctx.lastPOVPos : Position{3, 3};
+            const Position activePos = (ctx.lastPOVPos.x != -1) ? ctx.lastPOVPos : Position{3, 3};
 
-            float px = static_cast<float>(activePos.x) - 3.5f;
-            float pz = static_cast<float>(activePos.y) - 3.5f;
+            const float px = static_cast<float>(activePos.x) - 3.5f;
+            const float pz = static_cast<float>(activePos.y) - 3.5f;
 
-            glm::vec3 camPos(px, 2.0f, pz);
+            const glm::vec3 camPos(px, 2.0f, pz);
 
-            float lookX = std::sin(m_povAngleX) * std::cos(m_povAngleY);
-            float lookY = std::sin(m_povAngleY);
-            float lookZ = std::cos(m_povAngleX) * std::cos(m_povAngleY);
+            const float lookX = std::sin(m_povAngleX) * std::cos(m_povAngleY);
+            const float lookY = std::sin(m_povAngleY);
+            const float lookZ = std::cos(m_povAngleX) * std::cos(m_povAngleY);
 
             view = glm::lookAt(camPos, camPos + glm::vec3(lookX, lookY, lookZ), glm::vec3(0.0f, 1.0f, 0.0f));
         }
         else
         {
-            float camX = m_cameraDistance * std::cos(m_cameraAngleY) * std::sin(m_cameraAngleX);
-            float camY = m_cameraDistance * std::sin(m_cameraAngleY);
-            float camZ = m_cameraDistance * std::cos(m_cameraAngleY) * std::cos(m_cameraAngleX);
+            const float camX = m_cameraDistance * std::cos(m_cameraAngleY) * std::sin(m_cameraAngleX);
+            const float camY = m_cameraDistance * std::sin(m_cameraAngleY);
+            const float camZ = m_cameraDistance * std::cos(m_cameraAngleY) * std::cos(m_cameraAngleX);
 
             view = glm::lookAt(glm::vec3(camX, camY, camZ), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         }
 
-        unsigned int progId            = m_program ? m_program->getGLId() : 0;
-        GLint        projLoc           = glGetUniformLocation(progId, "projection");
-        GLint        viewLoc           = glGetUniformLocation(progId, "view");
-        GLint        modelLoc          = glGetUniformLocation(progId, "model");
-        GLint        uColorOverrideLoc = glGetUniformLocation(progId, "uColorOverride");
-        GLint        uUseOverrideLoc   = glGetUniformLocation(progId, "uUseOverride");
-        GLint        uTextureLoc       = glGetUniformLocation(progId, "uTexture");
-        GLint        uHasTextureLoc    = glGetUniformLocation(progId, "uHasTexture");
+        const unsigned int progId            = m_program ? m_program->getGLId() : 0;
+        const GLint        projLoc           = glGetUniformLocation(progId, "projection");
+        const GLint        viewLoc           = glGetUniformLocation(progId, "view");
+        const GLint        modelLoc          = glGetUniformLocation(progId, "model");
+        const GLint        uColorOverrideLoc = glGetUniformLocation(progId, "uColorOverride");
+        const GLint        uUseOverrideLoc   = glGetUniformLocation(progId, "uUseOverride");
+        const GLint        uTextureLoc       = glGetUniformLocation(progId, "uTexture");
+        const GLint        uHasTextureLoc    = glGetUniformLocation(progId, "uHasTexture");
 
         glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(proj));
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
@@ -297,16 +297,16 @@ void ChessView3D::draw(const ChessGame& game, ViewContext& ctx)
                 // If this tile is the animation destination, draw at interpolated position
                 if (m_activeAnim && x == m_activeAnim->to.x && y == m_activeAnim->to.y)
                 {
-                    float t     = m_activeAnim->progress;
-                    float fromX = static_cast<float>(m_activeAnim->from.x) - 3.5f;
-                    float fromZ = static_cast<float>(m_activeAnim->from.y) - 3.5f;
-                    float toX   = static_cast<float>(m_activeAnim->to.x) - 3.5f;
-                    float toZ   = static_cast<float>(m_activeAnim->to.y) - 3.5f;
+                    const float t     = m_activeAnim->progress;
+                    const float fromX = static_cast<float>(m_activeAnim->from.x) - 3.5f;
+                    const float fromZ = static_cast<float>(m_activeAnim->from.y) - 3.5f;
+                    const float toX   = static_cast<float>(m_activeAnim->to.x) - 3.5f;
+                    const float toZ   = static_cast<float>(m_activeAnim->to.y) - 3.5f;
 
-                    float wx = fromX + (toX - fromX) * t;
-                    float wz = fromZ + (toZ - fromZ) * t;
+                    const float wx = fromX + (toX - fromX) * t;
+                    const float wz = fromZ + (toZ - fromZ) * t;
 
-                    float pr = (p.color == PieceColor::White) ? 1.0f : 0.1f;
+                    const float pr = (p.color == PieceColor::White) ? 1.0f : 0.1f;
                     glUniform3f(uColorOverrideLoc, pr, pr, pr);
 
                     if (m_pieceRenderer)
@@ -316,10 +316,10 @@ void ChessView3D::draw(const ChessGame& game, ViewContext& ctx)
                 }
                 else
                 {
-                    float wx = static_cast<float>(x) - 3.5f;
-                    float wz = static_cast<float>(y) - 3.5f;
+                    const float wx = static_cast<float>(x) - 3.5f;
+                    const float wz = static_cast<float>(y) - 3.5f;
 
-                    float pr = (p.color == PieceColor::White) ? 1.0f : 0.1f;
+                    const float pr = (p.color == PieceColor::White) ? 1.0f : 0.1f;
                     glUniform3f(uColorOverrideLoc, pr, pr, pr);
 
                     if (m_pieceRenderer)
@@ -341,7 +341,7 @@ void ChessView3D::draw(const ChessGame& game, ViewContext& ctx)
         glBindFramebuffer(GL_FRAMEBUFFER, previous_fbo);
         glViewport(previous_viewport.at(0), previous_viewport.at(1), previous_viewport.at(2), previous_viewport.at(3));
 
-        ImVec2 pos = ImGui::GetCursorScreenPos();
+        const ImVec2 pos = ImGui::GetCursorScreenPos();
         ImGui::Image(reinterpret_cast<void*>(static_cast<intptr_t>(m_texture)), ImVec2(static_cast<float>(m_width), static_cast<float>(m_height)), ImVec2(0, 1), ImVec2(1, 0));
 
         ImGui::SetCursorScreenPos(pos);
@@ -349,7 +349,7 @@ void ChessView3D::draw(const ChessGame& game, ViewContext& ctx)
 
         if (ImGui::IsItemActive())
         {
-            ImGuiIO& io = ImGui::GetIO();
+            const ImGuiIO& io = ImGui::GetIO();
 
             if (m_isPOV)
             {
@@ -367,7 +367,7 @@ void ChessView3D::draw(const ChessGame& game, ViewContext& ctx)
 
         if (ImGui::IsItemHovered() && !m_isPOV)
         {
-            ImGuiIO& io = ImGui::GetIO();
+            const ImGuiIO& io = ImGui::GetIO();
             if (io.MouseWheel != 0.0f)
             {
                 m_cameraDistance -= io.MouseWheel * 1.5f;

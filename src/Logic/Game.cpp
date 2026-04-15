@@ -4,8 +4,8 @@
 
 std::string ChessGame::toChessNotation(Position p) const
 {
-    char file = static_cast<char>('a' + p.x);
-    char rank = static_cast<char>('8' - p.y);
+    const char file = static_cast<char>('a' + p.x);
+    const char rank = static_cast<char>('8' - p.y);
     return std::string(1, file) + std::string(1, rank);
 }
 
@@ -31,7 +31,7 @@ bool ChessGame::move(Position from, Position to)
         }
 
         saveSnapshot();
-        Piece target = m_board.getPiece(to.x, to.y);
+        const Piece target = m_board.getPiece(to.x, to.y);
 
         if (!target.isEmpty())
         {
@@ -45,7 +45,7 @@ bool ChessGame::move(Position from, Position to)
         {
             m_state = (m_currentTurn == PieceColor::White) ? GameState::WhiteWins : GameState::BlackWins;
 
-            Piece p = m_board.getPiece(from.x, from.y);
+            const Piece p = m_board.getPiece(from.x, from.y);
             m_board.setPiece(to.x, to.y, p);
             m_board.setPiece(from.x, from.y, Piece{PieceType::None, PieceColor::None});
 
@@ -53,14 +53,14 @@ bool ChessGame::move(Position from, Position to)
             return true;
         }
 
-        std::string moveStr = toChessNotation(from) + toChessNotation(to);
+        const std::string moveStr = toChessNotation(from) + toChessNotation(to);
 
-        Piece p = m_board.getPiece(from.x, from.y);
+        const Piece p = m_board.getPiece(from.x, from.y);
         m_board.setPiece(to.x, to.y, p);
         m_board.setPiece(from.x, from.y, Piece{PieceType::None, PieceColor::None});
 
-        bool isPawn = (p.type == PieceType::Pawn);
-        bool endRow = (p.color == PieceColor::White && to.y == 0) || (p.color == PieceColor::Black && to.y == 7);
+        const bool isPawn = (p.type == PieceType::Pawn);
+        const bool endRow = (p.color == PieceColor::White && to.y == 0) || (p.color == PieceColor::Black && to.y == 7);
 
         if (isPawn && endRow)
         {
@@ -129,7 +129,7 @@ std::string ChessGame::getFEN() const
         int emptyCount = 0;
         for (int x = 0; x < 8; ++x)
         {
-            Piece p = m_board.getPiece(x, y);
+            const Piece p = m_board.getPiece(x, y);
 
             if (p.isEmpty())
             {
@@ -199,7 +199,7 @@ void ChessGame::loadFEN(const std::string& fen)
     size_t i = 0;
     for (; i < fen.length(); ++i)
     {
-        char c = fen[i];
+        const char c = fen[i];
 
         if (c == ' ')
             break;
@@ -215,9 +215,9 @@ void ChessGame::loadFEN(const std::string& fen)
         }
         else
         {
-            PieceColor color  = isupper(c) ? PieceColor::White : PieceColor::Black;
-            PieceType  type   = PieceType::None;
-            char       lowerC = static_cast<char>(tolower(c));
+            const PieceColor color  = isupper(c) ? PieceColor::White : PieceColor::Black;
+            PieceType        type   = PieceType::None;
+            const char       lowerC = static_cast<char>(tolower(c));
 
             switch (lowerC)
             {
@@ -239,8 +239,8 @@ void ChessGame::loadFEN(const std::string& fen)
 
     if (i + 1 < fen.length())
     {
-        char turn     = fen[i + 1];
-        m_currentTurn = (turn == 'w') ? PieceColor::White : PieceColor::Black;
+        const char turn = fen[i + 1];
+        m_currentTurn   = (turn == 'w') ? PieceColor::White : PieceColor::Black;
     }
 
     m_history.clear();
@@ -262,7 +262,7 @@ void ChessGame::undo()
     if (m_backupHistory.empty())
         return;
 
-    GameSnapshot lastState = m_backupHistory.back();
+    const GameSnapshot lastState = m_backupHistory.back();
 
     m_board       = lastState.board;
     m_currentTurn = lastState.currentTurn;

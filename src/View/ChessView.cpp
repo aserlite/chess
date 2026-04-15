@@ -20,12 +20,12 @@ void ChessView::draw()
 {
     if (m_appState == AppState::Menu)
     {
-        MenuAction action = m_menu.draw();
+        const MenuAction action = m_menu.draw();
 
         if (action == MenuAction::Start1v1)
         {
             m_aiController.setEnabled(false);
-            std::string fen = m_menu.getEnteredFEN();
+            const std::string fen = m_menu.getEnteredFEN();
             if (!fen.empty())
             {
                 m_game.loadFEN(fen);
@@ -51,7 +51,7 @@ void ChessView::draw()
             m_aiController.setEnabled(true);
             m_aiController.setDifficulty(m_menu.getSelectedDifficulty());
             m_aiController.setPlayerColor(m_menu.getSelectedColor());
-            std::string fen = m_menu.getEnteredFEN();
+            const std::string fen = m_menu.getEnteredFEN();
             if (!fen.empty())
             {
                 m_game.loadFEN(fen);
@@ -75,7 +75,7 @@ void ChessView::draw()
     }
     else
     {
-        bool quit = m_view2D.draw(m_game, m_viewContext);
+        const bool quit = m_view2D.draw(m_game, m_viewContext);
         m_view3D.draw(m_game, m_viewContext);
         drawInfoWindow();
         drawChaosWindow();
@@ -92,7 +92,7 @@ void ChessView::drawInfoWindow()
     ImGui::Begin("Infos Partie");
 
     ImGui::Text("FEN:");
-    std::string           fen = m_game.getFEN();
+    const std::string           fen = m_game.getFEN();
     std::array<char, 256> fenBuffer{};
     std::strncpy(fenBuffer.data(), fen.c_str(), fenBuffer.size() - 1);
     fenBuffer[fenBuffer.size() - 1] = '\0';
@@ -100,7 +100,7 @@ void ChessView::drawInfoWindow()
 
     ImGui::Separator();
 
-    bool isHistoryEmpty = m_game.getHistory().empty();
+    const bool isHistoryEmpty = m_game.getHistory().empty();
 
     ImGui::BeginDisabled(isHistoryEmpty);
 
@@ -143,7 +143,7 @@ void ChessView::drawChaosWindow()
 
     ImGui::Begin("Infos mode Chaos");
 
-    std::string feedback = m_game.getLastFeedback();
+    const std::string feedback = m_game.getLastFeedback();
     if (!feedback.empty())
     {
         ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.4f, 1.0f), "Action refusée :");

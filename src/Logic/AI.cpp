@@ -25,7 +25,7 @@ bool AI::getRandomMove(const Board& board, PieceColor myColor, Move& outMove)
     {
         for (int x = 0; x < 8; ++x)
         {
-            Piece p = board.getPiece(x, y);
+            const Piece p = board.getPiece(x, y);
 
             if (!p.isEmpty() && p.color == myColor)
             {
@@ -33,8 +33,8 @@ bool AI::getRandomMove(const Board& board, PieceColor myColor, Move& outMove)
                 {
                     for (int tx = 0; tx < 8; ++tx)
                     {
-                        Position from = {x, y};
-                        Position to   = {tx, ty};
+                        const Position from = {x, y};
+                        const Position to   = {tx, ty};
 
                         if (board.isMoveValid(from, to))
                         {
@@ -54,36 +54,36 @@ bool AI::getRandomMove(const Board& board, PieceColor myColor, Move& outMove)
     static std::mt19937                rng(std::time(nullptr));
     std::uniform_int_distribution<int> dist(0, possibleMoves.size() - 1);
 
-    int randomIndex = dist(rng);
-    outMove         = possibleMoves[randomIndex];
+    const int randomIndex = dist(rng);
+    outMove               = possibleMoves[randomIndex];
 
     return true;
 }
 
 bool AI::getGreedyMove(const Board& board, PieceColor myColor, Move& outMove)
 {
-    std::vector<Move> possibleMoves;
-    int               bestScore = -9999;
-    std::vector<Move> bestMoves;
+    const std::vector<Move> possibleMoves;
+    int                     bestScore = -9999;
+    std::vector<Move>       bestMoves;
 
     for (int y = 0; y < 8; ++y)
     {
         for (int x = 0; x < 8; ++x)
         {
-            Piece p = board.getPiece(x, y);
+            const Piece p = board.getPiece(x, y);
             if (!p.isEmpty() && p.color == myColor)
             {
                 for (int ty = 0; ty < 8; ++ty)
                 {
                     for (int tx = 0; tx < 8; ++tx)
                     {
-                        Position from = {x, y};
-                        Position to   = {tx, ty};
+                        const Position from = {x, y};
+                        const Position to   = {tx, ty};
 
                         if (board.isMoveValid(from, to))
                         {
-                            int   score  = 0;
-                            Piece target = board.getPiece(tx, ty);
+                            int         score  = 0;
+                            const Piece target = board.getPiece(tx, ty);
 
                             if (!target.isEmpty())
                             {

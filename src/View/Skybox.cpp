@@ -5,8 +5,8 @@
 Skybox::Skybox(const std::string& shaderPrefix, const std::vector<std::string>& facesPaths, bool upside_down)
     : m_upsideDown(upside_down)
 {
-    std::string vs = shaderPrefix + "skybox.vs.glsl";
-    std::string fs = shaderPrefix + "skybox.fs.glsl";
+    const std::string vs = shaderPrefix + "skybox.vs.glsl";
+    const std::string fs = shaderPrefix + "skybox.fs.glsl";
 
     m_program = std::make_unique<glimac::Program>(glimac::loadProgram(vs.c_str(), fs.c_str()));
 
