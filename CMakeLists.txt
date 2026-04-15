@@ -13,6 +13,8 @@ cmake_minimum_required(VERSION 3.20)
 # You can set the name of your project here
 project(chess)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 add_executable(${PROJECT_NAME})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
