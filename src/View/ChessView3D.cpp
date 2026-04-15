@@ -15,6 +15,8 @@ ChessView3D::~ChessView3D()
         glDeleteTextures(1, &m_texture);
         glDeleteRenderbuffers(1, &m_rbo);
     }
+    if (m_textureLightTile) glDeleteTextures(1, &m_textureLightTile);
+    if (m_textureDarkTile) glDeleteTextures(1, &m_textureDarkTile);
     if (m_cubeVao)
     {
         glDeleteVertexArrays(1, &m_cubeVao);
@@ -148,6 +150,27 @@ void ChessView3D::init()
     m_models[PieceType::Queen].load(prefixToUse + "models/queen/queen.obj");
     m_models[PieceType::King].load(prefixToUse + "models/king/king.obj");
 
+    auto imgLight = glimac::loadImage(prefixToUse + "textures/white.png");
+    if (imgLight)
+    {
+        glGenTextures(1, &m_textureLightTile);
+        glBindTexture(GL_TEXTURE_2D, m_textureLightTile);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imgLight->getWidth(), imgLight->getHeight(), 0, GL_RGBA, GL_FLOAT, imgLight->getPixels());
+        glGenerateMipmap(GL_TEXTURE_2D);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    }
+    auto imgDark = glimac::loadImage(prefixToUse + "textures/black.png");
+    if (imgDark)
+    {
+        glGenTextures(1, &m_textureDarkTile);
+        glBindTexture(GL_TEXTURE_2D, m_textureDarkTile);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imgDark->getWidth(), imgDark->getHeight(), 0, GL_RGBA, GL_FLOAT, imgDark->getPixels());
+        glGenerateMipmap(GL_TEXTURE_2D);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    }
+
     setupBuffers();
     resizeFBO(m_width, m_height);
 
@@ -240,6 +263,8 @@ void ChessView3D::draw(const ChessGame& game)
         unsigned int modelLoc          = glGetUniformLocation(progId, "model");
         unsigned int uColorOverrideLoc = glGetUniformLocation(progId, "uColorOverride");
         unsigned int uUseOverrideLoc   = glGetUniformLocation(progId, "uUseOverride");
+        unsigned int uTextureLoc       = glGetUniformLocation(progId, "uTexture");
+        unsigned int uHasTextureLoc    = glGetUniformLocation(progId, "uHasTexture");
 
         glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(proj));
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
@@ -250,6 +275,7 @@ void ChessView3D::draw(const ChessGame& game)
 
         glUniform3f(uColorOverrideLoc, 0.40f, 0.20f, 0.05f);
         glUniform1i(uUseOverrideLoc, 1);
+        glUniform1i(uHasTextureLoc, 0);
 
         struct FramePiece {
             float x, z, sx, sz;
@@ -284,9 +310,17 @@ void ChessView3D::draw(const ChessGame& game)
                 model           = glm::scale(model, glm::vec3(1.0f, 0.1f, 1.0f));
                 glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
-                glUniform3f(uColorOverrideLoc, color, color, color);
+                GLuint tileTex = isDark ? m_textureDarkTile : m_textureLightTile;
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, tileTex);
+                glUniform1i(uTextureLoc, 0);
+                glUniform1i(uHasTextureLoc, 1);
+
+                glUniform3f(uColorOverrideLoc, 1.0f, 1.0f, 1.0f);
                 glUniform1i(uUseOverrideLoc, 1);
                 glDrawArrays(GL_TRIANGLES, 0, 36);
+
+                glUniform1i(uHasTextureLoc, 0);
 
                 const Piece& p = board.getPiece(x, y);
                 if (!p.isEmpty())

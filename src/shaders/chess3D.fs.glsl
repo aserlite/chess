@@ -8,8 +8,15 @@ out vec4 FragColor;
 uniform vec3 uColorOverride;
 uniform bool uUseOverride;
 
+uniform sampler2D uTexture;
+uniform bool uHasTexture;
+
 void main() {
     vec3 baseColor = uUseOverride ? uColorOverride : vec3(0.8);
+    
+    if (uHasTexture) {
+        baseColor = texture(uTexture, TexCoords).rgb * baseColor;
+    }
     
     // Ambient
     vec3 ambient = 0.4 * baseColor;
