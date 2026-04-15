@@ -17,10 +17,6 @@ ChessView3D::~ChessView3D()
         glDeleteTextures(1, &m_texture);
         glDeleteRenderbuffers(1, &m_rbo);
     }
-    if (m_textureLightTile)
-        glDeleteTextures(1, &m_textureLightTile);
-    if (m_textureDarkTile)
-        glDeleteTextures(1, &m_textureDarkTile);
     if (m_cubeVao)
     {
         glDeleteVertexArrays(1, &m_cubeVao);
@@ -112,27 +108,7 @@ void ChessView3D::init()
     }
 
     m_pieceRenderer = std::make_unique<PieceRenderer>(prefixToUse);
-
-    auto imgLight = glimac::loadImage(prefixToUse + "textures/white.png");
-    if (imgLight)
-    {
-        glGenTextures(1, &m_textureLightTile);
-        glBindTexture(GL_TEXTURE_2D, m_textureLightTile);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imgLight->getWidth(), imgLight->getHeight(), 0, GL_RGBA, GL_FLOAT, imgLight->getPixels());
-        glGenerateMipmap(GL_TEXTURE_2D);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    }
-    auto imgDark = glimac::loadImage(prefixToUse + "textures/black.png");
-    if (imgDark)
-    {
-        glGenTextures(1, &m_textureDarkTile);
-        glBindTexture(GL_TEXTURE_2D, m_textureDarkTile);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imgDark->getWidth(), imgDark->getHeight(), 0, GL_RGBA, GL_FLOAT, imgDark->getPixels());
-        glGenerateMipmap(GL_TEXTURE_2D);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    }
+    m_boardRenderer = std::make_unique<BoardRenderer>(prefixToUse);
 
     setupBuffers();
     resizeFBO(m_width, m_height);
@@ -145,7 +121,7 @@ void ChessView3D::init()
         prefixToUse + "skyboxes/night/front.png",
         prefixToUse + "skyboxes/night/back.png"
     };
-    m_skybox = std::make_unique<Skybox>(shaderPrefixToUse, faces);
+    m_skybox = std::make_unique<Skybox>(shaderPrefixToUse, faces, true);
 }
 
 void ChessView3D::resizeFBO(int width, int height)
@@ -245,58 +221,23 @@ void ChessView3D::draw(const ChessGame& game)
 
         const auto& board = game.getBoard();
 
-        glUniform3f(uColorOverrideLoc, 0.40f, 0.20f, 0.05f);
-        glUniform1i(uUseOverrideLoc, 1);
-        glUniform1i(uHasTextureLoc, 0);
-
-        struct FramePiece {
-            float x, z, sx, sz;
-        };
-        FramePiece frames[] = {
-            {0.0f, -4.25f, 9.0f, 0.5f}, // Top
-            {0.0f, 4.25f, 9.0f, 0.5f},  // Bottom
-            {-4.25f, 0.0f, 0.5f, 8.0f}, // Left
-            {4.25f, 0.0f, 0.5f, 8.0f}   // Right
-        };
-
-        for (const auto& f : frames)
+        if (m_boardRenderer)
         {
-            glm::mat4 fModel = glm::translate(glm::mat4(1.0f), glm::vec3(f.x, 0.0f, f.z));
-            fModel           = glm::scale(fModel, glm::vec3(f.sx, 0.2f, f.sz));
-            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(fModel));
-            glDrawArrays(GL_TRIANGLES, 0, 36);
+            m_boardRenderer->draw(modelLoc, uColorOverrideLoc, uUseOverrideLoc, uHasTextureLoc, uTextureLoc, m_cubeVao);
         }
+
+        glUniform1i(uHasTextureLoc, 0);
 
         for (int y = 0; y < 8; ++y)
         {
             for (int x = 0; x < 8; ++x)
             {
-                bool  isDark = (x + y) % 2 != 0;
-                float color  = isDark ? 0.3f : 0.8f;
-
-                float wx = static_cast<float>(x) - 3.5f;
-                float wz = static_cast<float>(y) - 3.5f;
-
-                glBindVertexArray(m_cubeVao);
-                glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(wx, -0.05f, wz));
-                model           = glm::scale(model, glm::vec3(1.0f, 0.1f, 1.0f));
-                glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-
-                GLuint tileTex = isDark ? m_textureDarkTile : m_textureLightTile;
-                glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, tileTex);
-                glUniform1i(uTextureLoc, 0);
-                glUniform1i(uHasTextureLoc, 1);
-
-                glUniform3f(uColorOverrideLoc, 1.0f, 1.0f, 1.0f);
-                glUniform1i(uUseOverrideLoc, 1);
-                glDrawArrays(GL_TRIANGLES, 0, 36);
-
-                glUniform1i(uHasTextureLoc, 0);
-
                 const Piece& p = board.getPiece(x, y);
                 if (!p.isEmpty())
                 {
+                    float wx = static_cast<float>(x) - 3.5f;
+                    float wz = static_cast<float>(y) - 3.5f;
+
                     float pr = (p.color == PieceColor::White) ? 1.0f : 0.1f;
                     glUniform3f(uColorOverrideLoc, pr, pr, pr);
 
@@ -331,7 +272,7 @@ void ChessView3D::draw(const ChessGame& game)
             m_cameraAngleX -= io.MouseDelta.x * 0.01f;
             m_cameraAngleY -= io.MouseDelta.y * 0.01f;
 
-            m_cameraAngleY = std::max(-1.0f, std::min(1.57f, m_cameraAngleY));
+            m_cameraAngleY = std::max(0.0f, std::min(1.57f, m_cameraAngleY));
         }
 
         if (ImGui::IsItemHovered())

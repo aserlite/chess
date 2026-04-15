@@ -6,6 +6,7 @@
 #include <map>
 #include <memory>
 #include "../Logic/Game.hpp"
+#include "BoardRenderer.hpp"
 #include "PieceRenderer.hpp"
 #include "Skybox.hpp"
 
@@ -22,8 +23,7 @@ private:
     unsigned int m_texture = 0;
     unsigned int m_rbo     = 0;
 
-    unsigned int m_textureLightTile = 0;
-    unsigned int m_textureDarkTile  = 0;
+    std::unique_ptr<BoardRenderer> m_boardRenderer;
 
     std::unique_ptr<glimac::Program> m_program;
 
