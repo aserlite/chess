@@ -2,7 +2,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 
-Skybox::Skybox(const std::string& shaderPrefix, const std::vector<std::string>& facesPaths)
+Skybox::Skybox(const std::string& shaderPrefix, const std::vector<std::string>& facesPaths, bool upside_down)
+    : m_upsideDown(upside_down)
 {
     std::string vs = shaderPrefix + "skybox.vs.glsl";
     std::string fs = shaderPrefix + "skybox.fs.glsl";
@@ -66,7 +67,13 @@ void Skybox::render(const glm::mat4& projection, const glm::mat4& view)
     glDepthFunc(GL_LEQUAL);
     m_program->use();
 
-    glUniformMatrix4fv(glGetUniformLocation(m_program->getGLId(), "view"), 1, GL_FALSE, glm::value_ptr(view));
+    glm::mat4 customView = view;
+    if (m_upsideDown)
+    {
+        customView = glm::rotate(customView, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    }
+
+    glUniformMatrix4fv(glGetUniformLocation(m_program->getGLId(), "view"), 1, GL_FALSE, glm::value_ptr(customView));
     glUniformMatrix4fv(glGetUniformLocation(m_program->getGLId(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
     glBindVertexArray(m_vao);
