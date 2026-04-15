@@ -11,6 +11,15 @@ class Skybox {
 public:
     Skybox(const std::string& shaderPrefix, const std::vector<std::string>& facesPaths, bool upside_down = false);
     ~Skybox();
+
+    // copy is forbidden (because of openGL memory allocation)
+    Skybox(const Skybox&)            = delete;
+    Skybox& operator=(const Skybox&) = delete;
+
+    // move is allowed explicitly
+    Skybox(Skybox&&)            = default;
+    Skybox& operator=(Skybox&&) = default;
+
     void render(const glm::mat4& projection, const glm::mat4& view);
 
 private:

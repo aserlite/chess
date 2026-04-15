@@ -1,8 +1,6 @@
 #include "Game.hpp"
-#include "IGameRule.hpp"
 #include <cctype> // Pour toupper()
-
-ChessGame::~ChessGame() = default;
+#include "IGameRule.hpp"
 
 std::string ChessGame::toChessNotation(Position p) const
 {

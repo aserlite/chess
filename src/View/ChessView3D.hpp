@@ -17,6 +17,14 @@ public:
     ChessView3D();
     ~ChessView3D();
 
+    // copy is forbidden (because of openGL memory allocation)
+    ChessView3D(const ChessView3D&)            = delete;
+    ChessView3D& operator=(const ChessView3D&) = delete;
+
+    // move is allowed explicitly
+    ChessView3D(ChessView3D&&)            = default;
+    ChessView3D& operator=(ChessView3D&&) = default;
+
     void init();
     void draw(const ChessGame& game, ViewContext& ctx);
 
@@ -33,7 +41,7 @@ private:
     unsigned int m_cubeVbo = 0;
 
     std::unique_ptr<PieceRenderer> m_pieceRenderer;
-    std::unique_ptr<Skybox>      m_skybox;
+    std::unique_ptr<Skybox>        m_skybox;
 
     int m_width  = 800;
     int m_height = 600;
@@ -41,9 +49,9 @@ private:
     float m_cameraAngleX   = 0.0f;
     float m_cameraAngleY   = 0.8f;
     float m_cameraDistance = 10.0f;
-    
-    float m_povAngleX      = 0.0f;
-    float m_povAngleY      = 0.0f;
+
+    float m_povAngleX = 0.0f;
+    float m_povAngleY = 0.0f;
 
     bool m_isPOV = false;
 
@@ -58,5 +66,5 @@ private:
     };
 
     std::optional<MoveAnimation> m_activeAnim;
-    size_t m_lastHistorySize = 0;
+    size_t                       m_lastHistorySize = 0;
 };
