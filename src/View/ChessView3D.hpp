@@ -9,6 +9,7 @@
 #include "BoardRenderer.hpp"
 #include "PieceRenderer.hpp"
 #include "Skybox.hpp"
+#include "ViewContext.hpp"
 
 class ChessView3D {
 public:
@@ -16,7 +17,7 @@ public:
     ~ChessView3D();
 
     void init();
-    void draw(const ChessGame& game);
+    void draw(const ChessGame& game, ViewContext& ctx);
 
 private:
     unsigned int m_fbo     = 0;
@@ -39,6 +40,9 @@ private:
     float m_cameraAngleX   = 0.0f;
     float m_cameraAngleY   = 0.8f;
     float m_cameraDistance = 10.0f;
+    
+    float m_povAngleX      = 0.0f;
+    float m_povAngleY      = 0.0f;
 
     bool m_isPOV = false;
 

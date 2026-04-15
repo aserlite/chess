@@ -153,7 +153,7 @@ void ChessView3D::resizeFBO(int width, int height)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void ChessView3D::draw(const ChessGame& game)
+void ChessView3D::draw(const ChessGame& game, ViewContext& ctx)
 {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
     ImGui::SetNextWindowSize(ImVec2(600, 600), ImGuiCond_FirstUseEver);
@@ -199,11 +199,35 @@ void ChessView3D::draw(const ChessGame& game)
         float     aspect = static_cast<float>(m_width) / static_cast<float>(m_height);
         glm::mat4 proj   = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
 
-        float camX = m_cameraDistance * std::cos(m_cameraAngleY) * std::sin(m_cameraAngleX);
-        float camY = m_cameraDistance * std::sin(m_cameraAngleY);
-        float camZ = m_cameraDistance * std::cos(m_cameraAngleY) * std::cos(m_cameraAngleX);
+        glm::mat4 view;
+        if (m_isPOV)
+        {
+            if (ctx.selectedPos.x != -1 && ctx.selectedPos.y != -1)
+            {
+                ctx.lastPOVPos = ctx.selectedPos;
+            }
 
-        glm::mat4 view = glm::lookAt(glm::vec3(camX, camY, camZ), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+            Position activePos = (ctx.lastPOVPos.x != -1) ? ctx.lastPOVPos : Position{3, 3};
+
+            float px = static_cast<float>(activePos.x) - 3.5f;
+            float pz = static_cast<float>(activePos.y) - 3.5f;
+            
+            glm::vec3 camPos(px, 2.0f, pz);
+
+            float lookX = std::sin(m_povAngleX) * std::cos(m_povAngleY);
+            float lookY = std::sin(m_povAngleY);
+            float lookZ = std::cos(m_povAngleX) * std::cos(m_povAngleY);
+
+            view = glm::lookAt(camPos, camPos + glm::vec3(lookX, lookY, lookZ), glm::vec3(0.0f, 1.0f, 0.0f));
+        }
+        else
+        {
+            float camX = m_cameraDistance * std::cos(m_cameraAngleY) * std::sin(m_cameraAngleX);
+            float camY = m_cameraDistance * std::sin(m_cameraAngleY);
+            float camZ = m_cameraDistance * std::cos(m_cameraAngleY) * std::cos(m_cameraAngleX);
+
+            view = glm::lookAt(glm::vec3(camX, camY, camZ), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        }
 
         unsigned int progId            = m_program ? m_program->getGLId() : 0;
         unsigned int projLoc           = glGetUniformLocation(progId, "projection");
@@ -269,13 +293,22 @@ void ChessView3D::draw(const ChessGame& game)
         if (ImGui::IsItemActive())
         {
             ImGuiIO& io = ImGui::GetIO();
-            m_cameraAngleX -= io.MouseDelta.x * 0.01f;
-            m_cameraAngleY -= io.MouseDelta.y * 0.01f;
-
-            m_cameraAngleY = std::max(0.0f, std::min(1.57f, m_cameraAngleY));
+            
+            if (m_isPOV) 
+            {
+                m_povAngleX -= io.MouseDelta.x * 0.01f;
+                m_povAngleY -= io.MouseDelta.y * 0.01f;
+                m_povAngleY = std::max(-1.55f, std::min(1.55f, m_povAngleY));
+            } 
+            else 
+            {
+                m_cameraAngleX -= io.MouseDelta.x * 0.01f;
+                m_cameraAngleY -= io.MouseDelta.y * 0.01f;
+                m_cameraAngleY = std::max(0.0f, std::min(1.57f, m_cameraAngleY));
+            }
         }
 
-        if (ImGui::IsItemHovered())
+        if (ImGui::IsItemHovered() && !m_isPOV)
         {
             ImGuiIO& io = ImGui::GetIO();
             if (io.MouseWheel != 0.0f)

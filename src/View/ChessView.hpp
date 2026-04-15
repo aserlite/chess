@@ -5,6 +5,7 @@
 #include "ChessView2D.hpp"
 #include "ChessView3D.hpp"
 #include "MenuView.hpp"
+#include "ViewContext.hpp"
 #include <cstdint>
 
 enum class AppState : std::uint8_t {
@@ -25,6 +26,7 @@ private:
     AIController& m_aiController;
     MenuView      m_menu;
     AppState      m_appState;
+    ViewContext   m_viewContext;
 
     ChessView2D m_view2D;
     ChessView3D m_view3D;

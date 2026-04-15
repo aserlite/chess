@@ -3,8 +3,7 @@
 #include <filesystem>
 
 ChessView2D::ChessView2D()
-    : m_selectedPos{-1, -1}
-    , m_font(nullptr)
+    : m_font(nullptr)
 {
 }
 
@@ -33,7 +32,7 @@ void ChessView2D::init()
     }
 }
 
-bool ChessView2D::draw(ChessGame& game)
+bool ChessView2D::draw(ChessGame& game, ViewContext& ctx)
 {
     bool quitRequested = false;
     ImGui::Begin("Plateau de Jeu (2D)");
@@ -45,7 +44,7 @@ bool ChessView2D::draw(ChessGame& game)
     ImGui::Separator();
 
     if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
-        m_selectedPos = {-1, -1};
+        ctx.selectedPos = {-1, -1};
 
     const auto& board    = game.getBoard();
     float       cellSize = 60.0f;
@@ -58,9 +57,9 @@ bool ChessView2D::draw(ChessGame& game)
             bool   isDark = (x + y) % 2 != 0;
             ImVec4 bgCol  = isDark ? ImVec4(0.4f, 0.4f, 0.4f, 1.f) : ImVec4(0.8f, 0.8f, 0.8f, 1.f);
 
-            if (m_selectedPos.x == x && m_selectedPos.y == y)
+            if (ctx.selectedPos.x == x && ctx.selectedPos.y == y)
                 bgCol = ImVec4(0.0f, 0.7f, 0.0f, 1.0f);
-            else if (m_selectedPos.x != -1 && game.isValidMove(m_selectedPos, {x, y}))
+            else if (ctx.selectedPos.x != -1 && game.isValidMove(ctx.selectedPos, {x, y}))
                 bgCol = ImVec4(0.0f, 0.4f, 0.8f, 0.8f);
 
             const Piece& p       = board.getPiece(x, y);
@@ -81,20 +80,20 @@ bool ChessView2D::draw(ChessGame& game)
 
             if (clicked)
             {
-                if (m_selectedPos.x == -1)
+                if (ctx.selectedPos.x == -1)
                 {
                     if (!p.isEmpty() && p.color == game.getCurrentTurn())
-                        m_selectedPos = {x, y};
+                        ctx.selectedPos = {x, y};
                 }
                 else
                 {
                     Position targetPos = {x, y};
-                    if (m_selectedPos.x == x && m_selectedPos.y == y)
-                        m_selectedPos = {-1, -1};
-                    else if (game.move(m_selectedPos, targetPos))
-                        m_selectedPos = {-1, -1};
+                    if (ctx.selectedPos.x == x && ctx.selectedPos.y == y)
+                        ctx.selectedPos = {-1, -1};
+                    else if (game.move(ctx.selectedPos, targetPos))
+                        ctx.selectedPos = {-1, -1};
                     else if (!p.isEmpty() && p.color == game.getCurrentTurn())
-                        m_selectedPos = {x, y};
+                        ctx.selectedPos = {x, y};
                 }
             }
 

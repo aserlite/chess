@@ -75,8 +75,8 @@ void ChessView::draw()
     }
     else
     {
-        bool quit = m_view2D.draw(m_game);
-        m_view3D.draw(m_game);
+        bool quit = m_view2D.draw(m_game, m_viewContext);
+        m_view3D.draw(m_game, m_viewContext);
         drawInfoWindow();
         drawChaosWindow();
 
