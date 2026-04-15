@@ -153,6 +153,194 @@ void ChessView3D::resizeFBO(int width, int height)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+void ChessView3D::setupFramebuffer(const ImVec2& size)
+{
+    if (m_fbo == 0 || size.x != static_cast<float>(m_width) || size.y != static_cast<float>(m_height))
+    {
+        resizeFBO(static_cast<int>(size.x), static_cast<int>(size.y));
+    }
+}
+
+glm::mat4 ChessView3D::calculateCameraView(ViewContext& ctx) const
+{
+    glm::mat4 view{};
+    if (m_isPOV)
+    {
+        if (ctx.selectedPos.x != -1 && ctx.selectedPos.y != -1)
+        {
+            ctx.lastPOVPos = ctx.selectedPos;
+        }
+
+        const Position activePos = (ctx.lastPOVPos.x != -1) ? ctx.lastPOVPos : Position{3, 3};
+
+        const float px = static_cast<float>(activePos.x) - 3.5f;
+        const float pz = static_cast<float>(activePos.y) - 3.5f;
+
+        const glm::vec3 camPos(px, 2.0f, pz);
+
+        const float lookX = std::sin(m_povAngleX) * std::cos(m_povAngleY);
+        const float lookY = std::sin(m_povAngleY);
+        const float lookZ = std::cos(m_povAngleX) * std::cos(m_povAngleY);
+
+        view = glm::lookAt(camPos, camPos + glm::vec3(lookX, lookY, lookZ), glm::vec3(0.0f, 1.0f, 0.0f));
+    }
+    else
+    {
+        const float camX = m_cameraDistance * std::cos(m_cameraAngleY) * std::sin(m_cameraAngleX);
+        const float camY = m_cameraDistance * std::sin(m_cameraAngleY);
+        const float camZ = m_cameraDistance * std::cos(m_cameraAngleY) * std::cos(m_cameraAngleX);
+
+        view = glm::lookAt(glm::vec3(camX, camY, camZ), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    }
+
+    return view;
+}
+
+void ChessView3D::updateAnimations(const ChessGame& game)
+{
+    const auto& history = game.getHistory();
+    const auto& board   = game.getBoard();
+    if (history.size() > m_lastHistorySize)
+    {
+        const auto& latest = history.back();
+        if (latest.actuallyMoved && latest.from.x != -1)
+        {
+            MoveAnimation anim;
+            anim.from     = latest.from;
+            anim.to       = latest.to;
+            anim.piece    = board.getPiece(latest.to.x, latest.to.y);
+            anim.progress = 0.0f;
+            m_activeAnim  = anim;
+        }
+        m_lastHistorySize = history.size();
+    }
+    else if (history.size() < m_lastHistorySize)
+    {
+        // Undo happened, cancel animation
+        m_activeAnim.reset();
+        m_lastHistorySize = history.size();
+    }
+
+    // Tick animation
+    constexpr float animDuration = 0.4f;
+    if (m_activeAnim)
+    {
+        m_activeAnim->progress += ImGui::GetIO().DeltaTime / animDuration;
+        if (m_activeAnim->progress >= 1.0f)
+        {
+            m_activeAnim.reset();
+        }
+    }
+}
+
+void ChessView3D::renderScene(const ChessGame& game, const glm::mat4& view, const glm::mat4& proj)
+{
+    const unsigned int progId            = m_program ? m_program->getGLId() : 0;
+    const GLint        projLoc           = glGetUniformLocation(progId, "projection");
+    const GLint        viewLoc           = glGetUniformLocation(progId, "view");
+    const GLint        modelLoc          = glGetUniformLocation(progId, "model");
+    const GLint        uColorOverrideLoc = glGetUniformLocation(progId, "uColorOverride");
+    const GLint        uUseOverrideLoc   = glGetUniformLocation(progId, "uUseOverride");
+    const GLint        uTextureLoc       = glGetUniformLocation(progId, "uTexture");
+    const GLint        uHasTextureLoc    = glGetUniformLocation(progId, "uHasTexture");
+
+    glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(proj));
+    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+
+    glBindVertexArray(m_cubeVao);
+
+    const auto& board = game.getBoard();
+
+    // BOARD
+    if (m_boardRenderer)
+    {
+        m_boardRenderer->draw(modelLoc, uColorOverrideLoc, uUseOverrideLoc, uHasTextureLoc, uTextureLoc, m_cubeVao);
+    }
+
+    glUniform1i(uHasTextureLoc, 0);
+
+    // PIECES
+    for (int y = 0; y < 8; ++y)
+    {
+        for (int x = 0; x < 8; ++x)
+        {
+            const Piece& p = board.getPiece(x, y);
+            if (p.isEmpty())
+                continue;
+
+            if (m_activeAnim && x == m_activeAnim->to.x && y == m_activeAnim->to.y)
+            {
+                const float t     = m_activeAnim->progress;
+                const float fromX = static_cast<float>(m_activeAnim->from.x) - 3.5f;
+                const float fromZ = static_cast<float>(m_activeAnim->from.y) - 3.5f;
+                const float toX   = static_cast<float>(m_activeAnim->to.x) - 3.5f;
+                const float toZ   = static_cast<float>(m_activeAnim->to.y) - 3.5f;
+
+                const float wx = fromX + (toX - fromX) * t;
+                const float wz = fromZ + (toZ - fromZ) * t;
+
+                const float pr = (p.color == PieceColor::White) ? 1.0f : 0.1f;
+                glUniform3f(uColorOverrideLoc, pr, pr, pr);
+
+                if (m_pieceRenderer)
+                {
+                    m_pieceRenderer->draw(p, wx, wz, modelLoc, m_cubeVao);
+                }
+            }
+            else
+            {
+                const float wx = static_cast<float>(x) - 3.5f;
+                const float wz = static_cast<float>(y) - 3.5f;
+
+                const float pr = (p.color == PieceColor::White) ? 1.0f : 0.1f;
+                glUniform3f(uColorOverrideLoc, pr, pr, pr);
+
+                if (m_pieceRenderer)
+                {
+                    m_pieceRenderer->draw(p, wx, wz, modelLoc, m_cubeVao);
+                }
+            }
+        }
+    }
+
+    // SKYBOX
+    if (m_skybox)
+    {
+        m_skybox->render(proj, view);
+    }
+}
+
+void ChessView3D::handleCameraInput()
+{
+    if (ImGui::IsItemActive())
+    {
+        const ImGuiIO& io = ImGui::GetIO();
+
+        if (m_isPOV)
+        {
+            m_povAngleX -= io.MouseDelta.x * 0.01f;
+            m_povAngleY -= io.MouseDelta.y * 0.01f;
+            m_povAngleY = std::max(-1.55f, std::min(1.55f, m_povAngleY));
+        }
+        else
+        {
+            m_cameraAngleX -= io.MouseDelta.x * 0.01f;
+            m_cameraAngleY -= io.MouseDelta.y * 0.01f;
+            m_cameraAngleY = std::max(0.0f, std::min(1.57f, m_cameraAngleY));
+        }
+    }
+
+    if (ImGui::IsItemHovered() && !m_isPOV)
+    {
+        const ImGuiIO& io = ImGui::GetIO();
+        if (io.MouseWheel != 0.0f)
+        {
+            m_cameraDistance -= io.MouseWheel * 1.5f;
+            m_cameraDistance = std::max(2.0f, std::min(30.0f, m_cameraDistance));
+        }
+    }
+}
+
 void ChessView3D::draw(const ChessGame& game, ViewContext& ctx)
 {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
@@ -174,10 +362,7 @@ void ChessView3D::draw(const ChessGame& game, ViewContext& ctx)
     if (size.y <= 0.0f)
         size.y = 600.0f;
 
-    if (m_fbo == 0 || size.x != static_cast<float>(m_width) || size.y != static_cast<float>(m_height))
-    {
-        resizeFBO(static_cast<int>(size.x), static_cast<int>(size.y));
-    }
+    setupFramebuffer(size);
 
     if (m_fbo && size.x > 0 && size.y > 0)
     {
@@ -196,144 +381,14 @@ void ChessView3D::draw(const ChessGame& game, ViewContext& ctx)
         if (m_program)
             m_program->use();
 
-        const float     aspect = static_cast<float>(m_width) / static_cast<float>(m_height);
-        glm::mat4 proj   = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
+        const float aspect = static_cast<float>(m_width) / static_cast<float>(m_height);
+        glm::mat4   proj   = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
 
-        glm::mat4 view;
-        if (m_isPOV)
-        {
-            if (ctx.selectedPos.x != -1 && ctx.selectedPos.y != -1)
-            {
-                ctx.lastPOVPos = ctx.selectedPos;
-            }
+        glm::mat4 view = calculateCameraView(ctx);
 
-            const Position activePos = (ctx.lastPOVPos.x != -1) ? ctx.lastPOVPos : Position{3, 3};
+        updateAnimations(game);
 
-            const float px = static_cast<float>(activePos.x) - 3.5f;
-            const float pz = static_cast<float>(activePos.y) - 3.5f;
-
-            const glm::vec3 camPos(px, 2.0f, pz);
-
-            const float lookX = std::sin(m_povAngleX) * std::cos(m_povAngleY);
-            const float lookY = std::sin(m_povAngleY);
-            const float lookZ = std::cos(m_povAngleX) * std::cos(m_povAngleY);
-
-            view = glm::lookAt(camPos, camPos + glm::vec3(lookX, lookY, lookZ), glm::vec3(0.0f, 1.0f, 0.0f));
-        }
-        else
-        {
-            const float camX = m_cameraDistance * std::cos(m_cameraAngleY) * std::sin(m_cameraAngleX);
-            const float camY = m_cameraDistance * std::sin(m_cameraAngleY);
-            const float camZ = m_cameraDistance * std::cos(m_cameraAngleY) * std::cos(m_cameraAngleX);
-
-            view = glm::lookAt(glm::vec3(camX, camY, camZ), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        }
-
-        const unsigned int progId            = m_program ? m_program->getGLId() : 0;
-        const GLint        projLoc           = glGetUniformLocation(progId, "projection");
-        const GLint        viewLoc           = glGetUniformLocation(progId, "view");
-        const GLint        modelLoc          = glGetUniformLocation(progId, "model");
-        const GLint        uColorOverrideLoc = glGetUniformLocation(progId, "uColorOverride");
-        const GLint        uUseOverrideLoc   = glGetUniformLocation(progId, "uUseOverride");
-        const GLint        uTextureLoc       = glGetUniformLocation(progId, "uTexture");
-        const GLint        uHasTextureLoc    = glGetUniformLocation(progId, "uHasTexture");
-
-        glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(proj));
-        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-
-        glBindVertexArray(m_cubeVao);
-
-        const auto& board = game.getBoard();
-
-        if (m_boardRenderer)
-        {
-            m_boardRenderer->draw(modelLoc, uColorOverrideLoc, uUseOverrideLoc, uHasTextureLoc, uTextureLoc, m_cubeVao);
-        }
-
-        glUniform1i(uHasTextureLoc, 0);
-
-        // Detect new moves and spawn animations
-        const auto& history = game.getHistory();
-        if (history.size() > m_lastHistorySize)
-        {
-            const auto& latest = history.back();
-            if (latest.actuallyMoved && latest.from.x != -1)
-            {
-                MoveAnimation anim;
-                anim.from     = latest.from;
-                anim.to       = latest.to;
-                anim.piece    = board.getPiece(latest.to.x, latest.to.y);
-                anim.progress = 0.0f;
-                m_activeAnim  = anim;
-            }
-            m_lastHistorySize = history.size();
-        }
-        else if (history.size() < m_lastHistorySize)
-        {
-            // Undo happened, cancel animation
-            m_activeAnim.reset();
-            m_lastHistorySize = history.size();
-        }
-
-        // Tick animation
-        constexpr float animDuration = 0.4f;
-        if (m_activeAnim)
-        {
-            m_activeAnim->progress += ImGui::GetIO().DeltaTime / animDuration;
-            if (m_activeAnim->progress >= 1.0f)
-            {
-                m_activeAnim.reset();
-            }
-        }
-
-        for (int y = 0; y < 8; ++y)
-        {
-            for (int x = 0; x < 8; ++x)
-            {
-                const Piece& p = board.getPiece(x, y);
-                if (p.isEmpty())
-                    continue;
-
-                // If this tile is the animation destination, draw at interpolated position
-                if (m_activeAnim && x == m_activeAnim->to.x && y == m_activeAnim->to.y)
-                {
-                    const float t     = m_activeAnim->progress;
-                    const float fromX = static_cast<float>(m_activeAnim->from.x) - 3.5f;
-                    const float fromZ = static_cast<float>(m_activeAnim->from.y) - 3.5f;
-                    const float toX   = static_cast<float>(m_activeAnim->to.x) - 3.5f;
-                    const float toZ   = static_cast<float>(m_activeAnim->to.y) - 3.5f;
-
-                    const float wx = fromX + (toX - fromX) * t;
-                    const float wz = fromZ + (toZ - fromZ) * t;
-
-                    const float pr = (p.color == PieceColor::White) ? 1.0f : 0.1f;
-                    glUniform3f(uColorOverrideLoc, pr, pr, pr);
-
-                    if (m_pieceRenderer)
-                    {
-                        m_pieceRenderer->draw(p, wx, wz, modelLoc, m_cubeVao);
-                    }
-                }
-                else
-                {
-                    const float wx = static_cast<float>(x) - 3.5f;
-                    const float wz = static_cast<float>(y) - 3.5f;
-
-                    const float pr = (p.color == PieceColor::White) ? 1.0f : 0.1f;
-                    glUniform3f(uColorOverrideLoc, pr, pr, pr);
-
-                    if (m_pieceRenderer)
-                    {
-                        m_pieceRenderer->draw(p, wx, wz, modelLoc, m_cubeVao);
-                    }
-                }
-            }
-        }
-
-        if (m_skybox)
-        {
-            m_skybox->render(proj, view);
-        }
+        renderScene(game, view, proj);
 
         glBindVertexArray(0);
         glDisable(GL_DEPTH_TEST);
@@ -347,33 +402,7 @@ void ChessView3D::draw(const ChessGame& game, ViewContext& ctx)
         ImGui::SetCursorScreenPos(pos);
         ImGui::InvisibleButton("##3DViewBtn", ImVec2(static_cast<float>(m_width), static_cast<float>(m_height)));
 
-        if (ImGui::IsItemActive())
-        {
-            const ImGuiIO& io = ImGui::GetIO();
-
-            if (m_isPOV)
-            {
-                m_povAngleX -= io.MouseDelta.x * 0.01f;
-                m_povAngleY -= io.MouseDelta.y * 0.01f;
-                m_povAngleY = std::max(-1.55f, std::min(1.55f, m_povAngleY));
-            }
-            else
-            {
-                m_cameraAngleX -= io.MouseDelta.x * 0.01f;
-                m_cameraAngleY -= io.MouseDelta.y * 0.01f;
-                m_cameraAngleY = std::max(0.0f, std::min(1.57f, m_cameraAngleY));
-            }
-        }
-
-        if (ImGui::IsItemHovered() && !m_isPOV)
-        {
-            const ImGuiIO& io = ImGui::GetIO();
-            if (io.MouseWheel != 0.0f)
-            {
-                m_cameraDistance -= io.MouseWheel * 1.5f;
-                m_cameraDistance = std::max(2.0f, std::min(30.0f, m_cameraDistance));
-            }
-        }
+        handleCameraInput();
     }
 
     ImGui::End();

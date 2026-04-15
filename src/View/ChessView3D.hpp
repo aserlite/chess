@@ -28,6 +28,12 @@ public:
     void draw(const ChessGame& game, ViewContext& ctx);
 
 private:
+    void      setupFramebuffer(const ImVec2& size);
+    glm::mat4 calculateCameraView(ViewContext& ctx) const;
+    void      updateAnimations(const ChessGame& game);
+    void      renderScene(const ChessGame& game, const glm::mat4& view, const glm::mat4& proj);
+    void      handleCameraInput();
+
     unsigned int m_fbo     = 0;
     unsigned int m_texture = 0;
     unsigned int m_rbo     = 0;
