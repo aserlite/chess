@@ -4,7 +4,7 @@
 #include <glimac/glm.hpp>
 #include <map>
 #include <string>
-#include "../Logic/Game.hpp"
+#include "../Logic/Piece.hpp"
 #include "Model3D.hpp"
 
 class PieceRenderer {

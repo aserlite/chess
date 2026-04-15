@@ -1,5 +1,4 @@
 #include "AI.hpp"
-#include <algorithm>
 #include <ctime>
 #include <random>
 #include <vector>
@@ -51,11 +50,11 @@ bool AI::getRandomMove(const Board& board, PieceColor myColor, Move& outMove)
         return false;
     }
 
-    static std::mt19937                rng(std::time(nullptr));
-    std::uniform_int_distribution<int> dist(0, possibleMoves.size() - 1);
+    static std::mt19937                   rng(std::time(nullptr));
+    std::uniform_int_distribution<size_t> dist(0, possibleMoves.size() - 1);
 
-    const int randomIndex = dist(rng);
-    outMove               = possibleMoves[randomIndex];
+    const size_t randomIndex = dist(rng);
+    outMove                  = possibleMoves[randomIndex];
 
     return true;
 }
@@ -119,8 +118,8 @@ bool AI::getGreedyMove(const Board& board, PieceColor myColor, Move& outMove)
     if (bestMoves.empty())
         return false;
 
-    static std::mt19937                rng(std::time(nullptr));
-    std::uniform_int_distribution<int> dist(0, bestMoves.size() - 1);
+    static std::mt19937                   rng(std::time(nullptr));
+    std::uniform_int_distribution<size_t> dist(0, bestMoves.size() - 1);
     outMove = bestMoves[dist(rng)];
 
     return true;

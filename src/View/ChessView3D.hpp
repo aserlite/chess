@@ -3,7 +3,6 @@
 #include <imgui.h>
 #include <glimac/Program.hpp>
 #include <glimac/glm.hpp>
-#include <map>
 #include <memory>
 #include <optional>
 #include "../Logic/Game.hpp"
