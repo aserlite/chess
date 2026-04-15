@@ -15,8 +15,10 @@ ChessView3D::~ChessView3D()
         glDeleteTextures(1, &m_texture);
         glDeleteRenderbuffers(1, &m_rbo);
     }
-    if (m_textureLightTile) glDeleteTextures(1, &m_textureLightTile);
-    if (m_textureDarkTile) glDeleteTextures(1, &m_textureDarkTile);
+    if (m_textureLightTile)
+        glDeleteTextures(1, &m_textureLightTile);
+    if (m_textureDarkTile)
+        glDeleteTextures(1, &m_textureDarkTile);
     if (m_cubeVao)
     {
         glDeleteVertexArrays(1, &m_cubeVao);
@@ -93,54 +95,18 @@ void ChessView3D::setupBuffers()
 
 void ChessView3D::init()
 {
-    const char* shader_prefixes[] = {
-        "src/shaders/",
-        "../src/shaders/",
-        "../../src/shaders/"
-    };
-
     std::string shaderPrefixToUse = "src/shaders/";
-    bool        loaded            = false;
+    std::string prefixToUse       = "assets/";
 
-    for (const char* prefix : shader_prefixes)
+    std::string vs = shaderPrefixToUse + "chess3D.vs.glsl";
+    std::string fs = shaderPrefixToUse + "chess3D.fs.glsl";
+    try
     {
-        try
-        {
-            // Test if the main shader exists here
-            std::string vs = std::string(prefix) + "chess3D.vs.glsl";
-            std::string fs = std::string(prefix) + "chess3D.fs.glsl";
-            m_program      = std::make_unique<glimac::Program>(glimac::loadProgram(vs.c_str(), fs.c_str()));
-
-            shaderPrefixToUse = prefix; // Save the working prefix!
-            loaded            = true;
-            break;
-        }
-        catch (...)
-        {
-            continue;
-        }
+        m_program = std::make_unique<glimac::Program>(glimac::loadProgram(vs.c_str(), fs.c_str()));
     }
-
-    if (!loaded)
-        std::cerr << "Impossible de charger les shaders 3D\n";
-
-    const char* asset_prefixes[] = {
-        "assets/",
-        "../assets/",
-        "../../assets/"
-    };
-
-    std::string prefixToUse = "assets/";
-    for (const char* prefix : asset_prefixes)
+    catch (...)
     {
-        std::string testPath = std::string(prefix) + "models/pawn/pawn.obj";
-        FILE*       f        = fopen(testPath.c_str(), "r");
-        if (f)
-        {
-            fclose(f);
-            prefixToUse = prefix;
-            break;
-        }
+        std::cerr << "Impossible de charger les shaders 3D\n";
     }
 
     m_models[PieceType::Pawn].load(prefixToUse + "models/pawn/pawn.obj");

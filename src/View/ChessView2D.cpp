@@ -13,27 +13,12 @@ void ChessView2D::init()
     ImGuiIO&             io             = ImGui::GetIO();
     static const ImWchar icons_ranges[] = {0x0020, 0x00FF, 0x2600, 0x26FF, 0};
 
-    std::vector<std::string> potentialPaths = {
-        "./src/DejaVuSans.ttf",
-        "../../src/DejaVuSans.ttf",
-        "DejaVuSans.ttf",
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
-    };
+    const char* foundPath = "src/DejaVuSans.ttf";
 
-    const char* foundPath = nullptr;
-    for (const auto& path : potentialPaths)
-    {
-        if (fileExists(path))
-        {
-            foundPath = path.c_str();
-            std::cout << "Police trouvee : " << path << "\n";
-            break;
-        }
-    }
-
-    if (foundPath)
+    if (fileExists(foundPath))
     {
         m_font = io.Fonts->AddFontFromFileTTF(foundPath, 40.0f, NULL, icons_ranges);
+        std::cout << "Police trouvee : " << foundPath << "\n";
     }
     else
     {
