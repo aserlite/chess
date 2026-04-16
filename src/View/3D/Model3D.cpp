@@ -1,5 +1,7 @@
 #include "Model3D.hpp"
 #include <iostream>
+#include <map>
+#include <tuple>
 
 Model3D::~Model3D()
 {
@@ -60,6 +62,23 @@ bool Model3D::load(const std::string& filepath)
     {
         std::cerr << "Failed to load OBJ: " << filepath << std::endl;
         return false;
+    }
+
+    std::map<std::tuple<float, float, float>, glm::vec3> posToNormal;
+    
+    for (size_t i = 0; i < geometry.getVertexCount(); ++i) {
+        const auto& v = geometry.getVertexBuffer()[i];
+        auto key = std::make_tuple(v.m_Position.x, v.m_Position.y, v.m_Position.z);
+        posToNormal[key] += v.m_Normal;
+    }
+
+    glimac::Geometry::Vertex* vertices = const_cast<glimac::Geometry::Vertex*>(geometry.getVertexBuffer());
+    for (size_t i = 0; i < geometry.getVertexCount(); ++i) {
+        auto key = std::make_tuple(vertices[i].m_Position.x, vertices[i].m_Position.y, vertices[i].m_Position.z);
+        glm::vec3 smoothed = posToNormal[key];
+        if (glm::length(smoothed) > 0.0001f) {
+            vertices[i].m_Normal = glm::normalize(smoothed);
+        }
     }
 
     cleanup();
