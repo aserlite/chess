@@ -17,12 +17,6 @@ ChessView3D::ChessView3D()
 
 ChessView3D::~ChessView3D()
 {
-    if (m_fbo)
-    {
-        glDeleteFramebuffers(1, &m_fbo);
-        glDeleteTextures(1, &m_texture);
-        glDeleteRenderbuffers(1, &m_rbo);
-    }
 }
 
 void ChessView3D::init()
@@ -46,7 +40,7 @@ void ChessView3D::init()
 
     m_unitCube = std::make_unique<CubeMesh>();
 
-    resizeFBO(m_width, m_height);
+    m_framebuffer = std::make_unique<Framebuffer>(800, 600);
 
     const std::vector<std::string> facesNight = {
         prefixToUse + "skyboxes/night/right.png",
@@ -69,40 +63,11 @@ void ChessView3D::init()
     m_skyboxDay = std::make_unique<Skybox>(shaderPrefixToUse, facesDay);
 }
 
-void ChessView3D::resizeFBO(int width, int height)
-{
-    if (m_fbo)
-    {
-        glDeleteFramebuffers(1, &m_fbo);
-        glDeleteTextures(1, &m_texture);
-        glDeleteRenderbuffers(1, &m_rbo);
-    }
-    m_width  = width;
-    m_height = height;
-
-    glGenFramebuffers(1, &m_fbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
-
-    glGenTextures(1, &m_texture);
-    glBindTexture(GL_TEXTURE_2D, m_texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_texture, 0);
-
-    glGenRenderbuffers(1, &m_rbo);
-    glBindRenderbuffer(GL_RENDERBUFFER, m_rbo);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_rbo);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
 void ChessView3D::setupFramebuffer(const ImVec2& size)
 {
-    if (m_fbo == 0 || size.x != static_cast<float>(m_width) || size.y != static_cast<float>(m_height))
+    if (m_framebuffer)
     {
-        resizeFBO(static_cast<int>(size.x), static_cast<int>(size.y));
+        m_framebuffer->resize(static_cast<int>(size.x), static_cast<int>(size.y));
     }
 }
 
@@ -301,15 +266,14 @@ void ChessView3D::draw(ChessGame& game, ViewContext& ctx)
 
     setupFramebuffer(size);
 
-    if (m_fbo && size.x > 0 && size.y > 0)
+    if (m_framebuffer && size.x > 0 && size.y > 0)
     {
         GLint previous_fbo{};
         glGetIntegerv(GL_FRAMEBUFFER_BINDING, &previous_fbo);
         std::array<GLint, 4> previous_viewport{};
         glGetIntegerv(GL_VIEWPORT, previous_viewport.data());
 
-        glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
-        glViewport(0, 0, m_width, m_height);
+        m_framebuffer->bind();
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -320,7 +284,7 @@ void ChessView3D::draw(ChessGame& game, ViewContext& ctx)
         if (m_program)
             m_program->use();
 
-        const float aspect = static_cast<float>(m_width) / static_cast<float>(m_height);
+        const float aspect = static_cast<float>(m_framebuffer->getWidth()) / static_cast<float>(m_framebuffer->getHeight());
         glm::mat4   proj   = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
 
         glm::mat4 view = m_activeCamera->getViewMatrix();
@@ -330,11 +294,11 @@ void ChessView3D::draw(ChessGame& game, ViewContext& ctx)
         const ImVec2            pos = ImGui::GetCursorScreenPos();
         std::optional<Position> hoveredPos;
 
-        if (ImGui::IsMouseHoveringRect(pos, ImVec2(pos.x + m_width, pos.y + m_height)))
+        if (ImGui::IsMouseHoveringRect(pos, ImVec2(pos.x + m_framebuffer->getWidth(), pos.y + m_framebuffer->getHeight())))
         {
             ImVec2    mousePos(ImGui::GetMousePos());
             glm::vec2 localMousePos(mousePos.x - pos.x, mousePos.y - pos.y);
-            glm::vec2 windowSize(static_cast<float>(m_width), static_cast<float>(m_height));
+            glm::vec2 windowSize(static_cast<float>(m_framebuffer->getWidth()), static_cast<float>(m_framebuffer->getHeight()));
 
             hoveredPos = m_mousePicker->getBoardPosition(localMousePos, windowSize, view, proj);
         }
@@ -348,10 +312,10 @@ void ChessView3D::draw(ChessGame& game, ViewContext& ctx)
         glBindFramebuffer(GL_FRAMEBUFFER, previous_fbo);
         glViewport(previous_viewport.at(0), previous_viewport.at(1), previous_viewport.at(2), previous_viewport.at(3));
 
-        ImGui::Image(reinterpret_cast<void*>(static_cast<intptr_t>(m_texture)), ImVec2(static_cast<float>(m_width), static_cast<float>(m_height)), ImVec2(0, 1), ImVec2(1, 0)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast, performance-no-int-to-ptr)
+        ImGui::Image(reinterpret_cast<void*>(static_cast<intptr_t>(m_framebuffer->getTextureId())), ImVec2(static_cast<float>(m_framebuffer->getWidth()), static_cast<float>(m_framebuffer->getHeight())), ImVec2(0, 1), ImVec2(1, 0)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast, performance-no-int-to-ptr)
 
         ImGui::SetCursorScreenPos(pos);
-        ImGui::InvisibleButton("##3DViewBtn", ImVec2(static_cast<float>(m_width), static_cast<float>(m_height)));
+        ImGui::InvisibleButton("##3DViewBtn", ImVec2(static_cast<float>(m_framebuffer->getWidth()), static_cast<float>(m_framebuffer->getHeight())));
 
         if (ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Left, 1.0f))
         {

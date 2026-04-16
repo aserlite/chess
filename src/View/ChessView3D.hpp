@@ -9,6 +9,7 @@
 #include "3D/BoardRenderer.hpp"
 #include "3D/ChessVisualState.hpp"
 #include "3D/CubeMesh.hpp"
+#include "3D/Framebuffer.hpp"
 #include "3D/ICamera.hpp"
 #include "3D/MousePicker.hpp"
 #include "3D/PieceRenderer.hpp"
@@ -42,10 +43,6 @@ private:
     std::unique_ptr<PovCamera>       m_povCam;
     ICamera*                         m_activeCamera = nullptr;
 
-    unsigned int m_fbo     = 0;
-    unsigned int m_texture = 0;
-    unsigned int m_rbo     = 0;
-
     std::unique_ptr<BoardRenderer> m_boardRenderer;
     ChessVisualState               m_visualState;
     std::unique_ptr<MousePicker>   m_mousePicker;
@@ -58,10 +55,7 @@ private:
     std::unique_ptr<Skybox>        m_skyboxNight;
     std::unique_ptr<Skybox>        m_skyboxDay;
 
-    int m_width  = 800;
-    int m_height = 600;
-
-    void resizeFBO(int width, int height);
+    std::unique_ptr<Framebuffer> m_framebuffer;
 
     struct MoveAnimation {
         Position from;
