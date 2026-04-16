@@ -10,6 +10,7 @@
 #include "3D/ChessVisualState.hpp"
 #include "3D/CubeMesh.hpp"
 #include "3D/ICamera.hpp"
+#include "3D/MousePicker.hpp"
 #include "3D/PieceRenderer.hpp"
 #include "3D/PovCamera.hpp"
 #include "3D/Skybox.hpp"
@@ -47,6 +48,7 @@ private:
 
     std::unique_ptr<BoardRenderer> m_boardRenderer;
     ChessVisualState               m_visualState;
+    std::unique_ptr<MousePicker>   m_mousePicker;
 
     std::unique_ptr<glimac::Program> m_program;
 

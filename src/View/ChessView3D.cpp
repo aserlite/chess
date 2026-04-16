@@ -11,6 +11,7 @@ ChessView3D::ChessView3D()
     : m_trackballCam(std::make_unique<TrackballCamera>())
     , m_povCam(std::make_unique<PovCamera>())
     , m_activeCamera(m_trackballCam.get())
+    , m_mousePicker(std::make_unique<MousePicker>())
 {
 }
 
@@ -331,33 +332,11 @@ void ChessView3D::draw(ChessGame& game, ViewContext& ctx)
 
         if (ImGui::IsMouseHoveringRect(pos, ImVec2(pos.x + m_width, pos.y + m_height)))
         {
-            ImVec2 mousePos = ImGui::GetMousePos();
-            float  ndcX     = (mousePos.x - pos.x) / static_cast<float>(m_width) * 2.0f - 1.0f;
-            float  ndcY     = 1.0f - (mousePos.y - pos.y) / static_cast<float>(m_height) * 2.0f;
+            ImVec2    mousePos(ImGui::GetMousePos());
+            glm::vec2 localMousePos(mousePos.x - pos.x, mousePos.y - pos.y);
+            glm::vec2 windowSize(static_cast<float>(m_width), static_cast<float>(m_height));
 
-            glm::vec4 rayClip  = glm::vec4(ndcX, ndcY, -1.0f, 1.0f);
-            glm::vec4 rayEye   = glm::inverse(proj) * rayClip;
-            rayEye             = glm::vec4(rayEye.x, rayEye.y, -1.0f, 0.0f);
-            glm::vec3 rayWorld = glm::normalize(glm::vec3(glm::inverse(view) * rayEye));
-
-            glm::mat4 invView = glm::inverse(view);
-            glm::vec3 origin  = glm::vec3(invView[3]);
-
-            // intersect with y=0
-            if (rayWorld.y != 0.0f)
-            {
-                float t = -origin.y / rayWorld.y;
-                if (t > 0.0f)
-                {
-                    glm::vec3 hit    = origin + rayWorld * t;
-                    int       boardX = static_cast<int>(std::round(hit.x + 3.5f));
-                    int       boardY = static_cast<int>(std::round(hit.z + 3.5f));
-                    if (boardX >= 0 && boardX < 8 && boardY >= 0 && boardY < 8)
-                    {
-                        hoveredPos = {boardX, boardY};
-                    }
-                }
-            }
+            hoveredPos = m_mousePicker->getBoardPosition(localMousePos, windowSize, view, proj);
         }
 
         renderScene(game, ctx, view, proj, hoveredPos);
