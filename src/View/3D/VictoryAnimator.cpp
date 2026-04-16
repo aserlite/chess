@@ -6,7 +6,7 @@ void VictoryAnimator::update(float deltaTime, const ChessGame& game)
 {
     const GameState state = game.getState();
 
-    if (!m_active && state != GameState::Playing)
+    if (!m_active && (state == GameState::WhiteWins || state == GameState::BlackWins))
     {
         m_active      = true;
         m_winnerColor = (state == GameState::WhiteWins) ? PieceColor::White
