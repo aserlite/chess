@@ -76,8 +76,11 @@ add_subdirectory(glimac)
 target_link_libraries(${PROJECT_NAME} PRIVATE glimac)
 set_target_properties(glimac PROPERTIES CXX_CLANG_TIDY "")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Wno-unknown-pragmas")
-
+if(MSVC)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
+else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Wno-unknown-pragmas")
+endif()
 # ---  Config des tests unitaires ---
 include(FetchContent)
 FetchContent_Declare(
