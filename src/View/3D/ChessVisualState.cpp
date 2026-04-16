@@ -34,7 +34,11 @@ void ChessVisualState::update(float deltaTime, const ChessGame& game)
     constexpr float animDuration = 0.4f;
     for (auto& anim : m_activeAnimations)
     {
-        anim.progress += deltaTime / animDuration;
+        float dx         = static_cast<float>(anim.to.x - anim.from.x);
+        float dy         = static_cast<float>(anim.to.y - anim.from.y);
+        float distance   = std::sqrt(dx * dx + dy * dy);
+        float travelTime = animDuration * std::max(1.0f, distance);
+        anim.progress += deltaTime / (animDuration * travelTime);
     }
 
     std::erase_if(m_activeAnimations, [](const MovingPiece& anim) {

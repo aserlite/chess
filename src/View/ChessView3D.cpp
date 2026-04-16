@@ -126,7 +126,7 @@ void ChessView3D::init()
         prefixToUse + "skyboxes/night/front.png",
         prefixToUse + "skyboxes/night/back.png"
     };
-    m_skybox = std::make_unique<Skybox>(shaderPrefixToUse, faces, true);
+    m_skybox = std::make_unique<Skybox>(shaderPrefixToUse, faces);
 }
 
 void ChessView3D::resizeFBO(int width, int height)
