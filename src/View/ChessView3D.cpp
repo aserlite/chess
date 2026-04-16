@@ -3,6 +3,7 @@
 #include <array>
 #include <glimac/glm.hpp>
 #include <iostream>
+#include "3D/Framebuffer.hpp"
 #include "3D/PieceRenderer.hpp"
 #include "3D/Skybox.hpp"
 #include "Logic/Piece.hpp"
@@ -24,43 +25,8 @@ void ChessView3D::init()
     const std::string shaderPrefixToUse = "src/shaders/";
     const std::string prefixToUse       = "assets/";
 
-    const std::string vs = shaderPrefixToUse + "chess3D.vs.glsl";
-    const std::string fs = shaderPrefixToUse + "chess3D.fs.glsl";
-    try
-    {
-        m_program = std::make_unique<glimac::Program>(glimac::loadProgram(vs.c_str(), fs.c_str()));
-    }
-    catch (...)
-    {
-        std::cerr << "Impossible de charger les shaders 3D\n";
-    }
-
-    m_pieceRenderer = std::make_unique<PieceRenderer>(prefixToUse);
-    m_boardRenderer = std::make_unique<BoardRenderer>(prefixToUse);
-
-    m_unitCube = std::make_unique<CubeMesh>();
-
-    m_framebuffer = std::make_unique<Framebuffer>(800, 600);
-
-    const std::vector<std::string> facesNight = {
-        prefixToUse + "skyboxes/night/right.png",
-        prefixToUse + "skyboxes/night/left.png",
-        prefixToUse + "skyboxes/night/top.png",
-        prefixToUse + "skyboxes/night/bottom.png",
-        prefixToUse + "skyboxes/night/front.png",
-        prefixToUse + "skyboxes/night/back.png"
-    };
-    m_skyboxNight = std::make_unique<Skybox>(shaderPrefixToUse, facesNight);
-
-    const std::vector<std::string> facesDay = {
-        prefixToUse + "skyboxes/day/right.png",
-        prefixToUse + "skyboxes/day/left.png",
-        prefixToUse + "skyboxes/day/top.png",
-        prefixToUse + "skyboxes/day/bottom.png",
-        prefixToUse + "skyboxes/day/front.png",
-        prefixToUse + "skyboxes/day/back.png"
-    };
-    m_skyboxDay = std::make_unique<Skybox>(shaderPrefixToUse, facesDay);
+    m_sceneRenderer = std::make_unique<SceneRenderer>(prefixToUse, shaderPrefixToUse);
+    m_framebuffer   = std::make_unique<Framebuffer>(800, 600);
 }
 
 void ChessView3D::setupFramebuffer(const ImVec2& size)
@@ -68,135 +34,6 @@ void ChessView3D::setupFramebuffer(const ImVec2& size)
     if (m_framebuffer)
     {
         m_framebuffer->resize(static_cast<int>(size.x), static_cast<int>(size.y));
-    }
-}
-
-void ChessView3D::renderScene(const ChessGame& game, const ViewContext& ctx, const glm::mat4& view, const glm::mat4& proj, std::optional<Position> hoveredPos)
-{
-    const unsigned int progId            = m_program ? m_program->getGLId() : 0;
-    const GLint        projLoc           = glGetUniformLocation(progId, "projection");
-    const GLint        viewLoc           = glGetUniformLocation(progId, "view");
-    const GLint        modelLoc          = glGetUniformLocation(progId, "model");
-    const GLint        uColorOverrideLoc = glGetUniformLocation(progId, "uColorOverride");
-    const GLint        uUseOverrideLoc   = glGetUniformLocation(progId, "uUseOverride");
-    const GLint        uTextureLoc       = glGetUniformLocation(progId, "uTexture");
-    const GLint        uHasTextureLoc    = glGetUniformLocation(progId, "uHasTexture");
-    const GLint        uOpacityLoc       = glGetUniformLocation(progId, "uOpacity");
-    const GLint        uIsWhiteTurnLoc   = glGetUniformLocation(progId, "uIsWhiteTurn");
-
-    const bool isWhiteTurn = game.getCurrentTurn() == PieceColor::White;
-
-    glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(proj));
-    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-    glUniform1f(uOpacityLoc, 1.0f);
-    glUniform1i(uIsWhiteTurnLoc, isWhiteTurn ? 1 : 0);
-
-    if (m_unitCube)
-        glBindVertexArray(m_unitCube->getVao());
-
-    const auto& board = game.getBoard();
-
-    // BOARD
-    if (m_boardRenderer)
-    {
-        m_boardRenderer->draw(modelLoc, uColorOverrideLoc, uUseOverrideLoc, uHasTextureLoc, uTextureLoc, m_unitCube->getVao(), game, ctx, hoveredPos);
-    }
-
-    glUniform1i(uHasTextureLoc, 0);
-
-    // PIECES
-    // 1. Draw static pieces
-    for (int y = 0; y < 8; ++y)
-    {
-        for (int x = 0; x < 8; ++x)
-        {
-            const Piece& p = board.getPiece(x, y);
-            if (p.isEmpty())
-                continue;
-
-            // Check if this piece is currently flying
-            bool isAnimating = false;
-            for (const auto& anim : m_visualState.getActiveAnimations())
-            {
-                if (anim.to.x == x && anim.to.y == y)
-                {
-                    isAnimating = true;
-                    break;
-                }
-            }
-
-            // If it's animating, skip it! We draw it in the next loop.
-            if (isAnimating)
-                continue;
-
-            // Normal static draw
-            const float wx = static_cast<float>(x) - 3.5f;
-            const float wz = static_cast<float>(y) - 3.5f;
-            const float pr = (p.color == PieceColor::White) ? 1.0f : 0.1f;
-            glUniform3f(uColorOverrideLoc, pr, pr, pr);
-
-            bool isHoveredTarget = (ctx.selectedPos.x != -1 && hoveredPos.has_value() && hoveredPos->x == x && hoveredPos->y == y && game.isValidMove(ctx.selectedPos, {x, y}));
-
-            if (isHoveredTarget)
-            {
-                glUniform1f(uOpacityLoc, 0.0f);
-                glDepthMask(GL_FALSE);
-            }
-
-            if (m_pieceRenderer)
-                m_pieceRenderer->draw(p, wx, wz, modelLoc, m_unitCube->getVao());
-
-            if (isHoveredTarget)
-            {
-                glDepthMask(GL_TRUE);
-                glUniform1f(uOpacityLoc, 1.0f);
-            }
-        }
-    }
-
-    // 2. Draw flying pieces
-    for (const auto& anim : m_visualState.getActiveAnimations())
-    {
-        glm::vec3 pos = anim.getCurrentWorldPos();
-
-        const float pr = (anim.piece.color == PieceColor::White) ? 1.0f : 0.1f;
-        glUniform3f(uColorOverrideLoc, pr, pr, pr);
-
-        if (m_pieceRenderer)
-        {
-            m_pieceRenderer->draw(anim.piece, pos.x, pos.z, modelLoc, m_unitCube->getVao(), pos.y);
-        }
-    }
-
-    // SKYBOX
-    auto& activeSkybox = isWhiteTurn ? m_skyboxDay : m_skyboxNight;
-    if (activeSkybox)
-    {
-        // Day: warm sunlit tint. Night: cool dark blue tint.
-        const glm::vec3 tint = isWhiteTurn
-                                   ? glm::vec3(1.0f, 0.95f, 0.85f)  // warm day
-                                   : glm::vec3(0.35f, 0.4f, 0.55f); // cold night
-        activeSkybox->render(proj, view, tint);
-    }
-
-    // 3. Ghost piece (draw last with transparency)
-    if (m_program)
-        m_program->use();
-    glBindVertexArray(m_unitCube->getVao());
-    if (ctx.selectedPos.x != -1 && hoveredPos.has_value() && game.isValidMove(ctx.selectedPos, *hoveredPos))
-    {
-        Piece       p  = board.getPiece(ctx.selectedPos.x, ctx.selectedPos.y);
-        const float wx = static_cast<float>(hoveredPos->x) - 3.5f;
-        const float wz = static_cast<float>(hoveredPos->y) - 3.5f;
-        const float pr = (p.color == PieceColor::White) ? 1.0f : 0.1f;
-        glUniform3f(uColorOverrideLoc, pr, pr, pr);
-
-        glUniform1f(uOpacityLoc, 0.5f);
-        glDepthMask(GL_FALSE);
-        if (m_pieceRenderer)
-            m_pieceRenderer->draw(p, wx, wz, modelLoc, m_unitCube->getVao());
-        glDepthMask(GL_TRUE);
-        glUniform1f(uOpacityLoc, 1.0f);
     }
 }
 
@@ -281,9 +118,6 @@ void ChessView3D::draw(ChessGame& game, ViewContext& ctx)
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-        if (m_program)
-            m_program->use();
-
         const float aspect = static_cast<float>(m_framebuffer->getWidth()) / static_cast<float>(m_framebuffer->getHeight());
         glm::mat4   proj   = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
 
@@ -303,7 +137,10 @@ void ChessView3D::draw(ChessGame& game, ViewContext& ctx)
             hoveredPos = m_mousePicker->getBoardPosition(localMousePos, windowSize, view, proj);
         }
 
-        renderScene(game, ctx, view, proj, hoveredPos);
+        if (m_sceneRenderer)
+        {
+            m_sceneRenderer->drawScene(game, ctx, view, proj, hoveredPos, m_visualState);
+        }
 
         glBindVertexArray(0);
         glDisable(GL_DEPTH_TEST);
