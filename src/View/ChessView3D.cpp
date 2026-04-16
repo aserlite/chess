@@ -22,78 +22,6 @@ ChessView3D::~ChessView3D()
         glDeleteTextures(1, &m_texture);
         glDeleteRenderbuffers(1, &m_rbo);
     }
-    if (m_cubeVao)
-    {
-        glDeleteVertexArrays(1, &m_cubeVao);
-        glDeleteBuffers(1, &m_cubeVbo);
-    }
-}
-
-void ChessView3D::setupBuffers()
-{
-    constexpr std::array<float, 288> vertices = {
-        // Back face
-        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, // Bottom-left
-        0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f,  // Bottom-right
-        0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,   // Top-right
-        0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,   // Top-right
-        -0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f,  // Top-left
-        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, // Bottom-left
-        // Front face
-        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, // Bottom-left
-        0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,  // Bottom-right
-        0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,   // Top-right
-        0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,   // Top-right
-        -0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,  // Top-left
-        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, // Bottom-left
-        // Left face
-        -0.5f, 0.5f, 0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,   // Top-right
-        -0.5f, 0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f,  // Top-left
-        -0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f, // Bottom-left
-        -0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f, // Bottom-left
-        -0.5f, -0.5f, 0.5f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f,  // Bottom-right
-        -0.5f, 0.5f, 0.5f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,   // Top-right
-                                                            // Right face
-        0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,     // Top-left
-        0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,    // Top-right
-        0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,   // Bottom-right
-        0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,   // Bottom-right
-        0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,    // Bottom-left
-        0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,     // Top-left
-        // Bottom face
-        -0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, // Top-right
-        0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f,  // Top-left
-        0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f,   // Bottom-left
-        0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f,   // Bottom-left
-        -0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f,  // Bottom-right
-        -0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, // Top-right
-        // Top face
-        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, // Top-left
-        0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,  // Top-right
-        0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,   // Bottom-right
-        0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,   // Bottom-right
-        -0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f,  // Bottom-left
-        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f  // Top-left
-    };
-
-    glGenVertexArrays(1, &m_cubeVao);
-    glGenBuffers(1, &m_cubeVbo);
-
-    glBindVertexArray(m_cubeVao);
-    glBindBuffer(GL_ARRAY_BUFFER, m_cubeVbo);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), nullptr);
-    glEnableVertexAttribArray(0);
-
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float))); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast, performance-no-int-to-ptr)
-    glEnableVertexAttribArray(1);
-
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(6 * sizeof(float))); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast, performance-no-int-to-ptr)
-    glEnableVertexAttribArray(2);
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
 }
 
 void ChessView3D::init()
@@ -115,7 +43,8 @@ void ChessView3D::init()
     m_pieceRenderer = std::make_unique<PieceRenderer>(prefixToUse);
     m_boardRenderer = std::make_unique<BoardRenderer>(prefixToUse);
 
-    setupBuffers();
+    m_unitCube = std::make_unique<CubeMesh>();
+
     resizeFBO(m_width, m_height);
 
     const std::vector<std::string> facesNight = {
@@ -196,14 +125,15 @@ void ChessView3D::renderScene(const ChessGame& game, const ViewContext& ctx, con
     glUniform1f(uOpacityLoc, 1.0f);
     glUniform1i(uIsWhiteTurnLoc, isWhiteTurn ? 1 : 0);
 
-    glBindVertexArray(m_cubeVao);
+    if (m_unitCube)
+        glBindVertexArray(m_unitCube->getVao());
 
     const auto& board = game.getBoard();
 
     // BOARD
     if (m_boardRenderer)
     {
-        m_boardRenderer->draw(modelLoc, uColorOverrideLoc, uUseOverrideLoc, uHasTextureLoc, uTextureLoc, m_cubeVao, game, ctx, hoveredPos);
+        m_boardRenderer->draw(modelLoc, uColorOverrideLoc, uUseOverrideLoc, uHasTextureLoc, uTextureLoc, m_unitCube->getVao(), game, ctx, hoveredPos);
     }
 
     glUniform1i(uHasTextureLoc, 0);
@@ -239,9 +169,7 @@ void ChessView3D::renderScene(const ChessGame& game, const ViewContext& ctx, con
             const float pr = (p.color == PieceColor::White) ? 1.0f : 0.1f;
             glUniform3f(uColorOverrideLoc, pr, pr, pr);
 
-            bool isHoveredTarget = (ctx.selectedPos.x != -1 && hoveredPos.has_value() &&
-                                    hoveredPos->x == x && hoveredPos->y == y &&
-                                    game.isValidMove(ctx.selectedPos, {x, y}));
+            bool isHoveredTarget = (ctx.selectedPos.x != -1 && hoveredPos.has_value() && hoveredPos->x == x && hoveredPos->y == y && game.isValidMove(ctx.selectedPos, {x, y}));
 
             if (isHoveredTarget)
             {
@@ -250,7 +178,7 @@ void ChessView3D::renderScene(const ChessGame& game, const ViewContext& ctx, con
             }
 
             if (m_pieceRenderer)
-                m_pieceRenderer->draw(p, wx, wz, modelLoc, m_cubeVao);
+                m_pieceRenderer->draw(p, wx, wz, modelLoc, m_unitCube->getVao());
 
             if (isHoveredTarget)
             {
@@ -270,7 +198,7 @@ void ChessView3D::renderScene(const ChessGame& game, const ViewContext& ctx, con
 
         if (m_pieceRenderer)
         {
-            m_pieceRenderer->draw(anim.piece, pos.x, pos.z, modelLoc, m_cubeVao, pos.y);
+            m_pieceRenderer->draw(anim.piece, pos.x, pos.z, modelLoc, m_unitCube->getVao(), pos.y);
         }
     }
 
@@ -280,18 +208,18 @@ void ChessView3D::renderScene(const ChessGame& game, const ViewContext& ctx, con
     {
         // Day: warm sunlit tint. Night: cool dark blue tint.
         const glm::vec3 tint = isWhiteTurn
-            ? glm::vec3(1.0f, 0.95f, 0.85f)   // warm day
-            : glm::vec3(0.35f, 0.4f, 0.55f);   // cold night
+                                   ? glm::vec3(1.0f, 0.95f, 0.85f)  // warm day
+                                   : glm::vec3(0.35f, 0.4f, 0.55f); // cold night
         activeSkybox->render(proj, view, tint);
     }
 
     // 3. Ghost piece (draw last with transparency)
     if (m_program)
         m_program->use();
-    glBindVertexArray(m_cubeVao);
+    glBindVertexArray(m_unitCube->getVao());
     if (ctx.selectedPos.x != -1 && hoveredPos.has_value() && game.isValidMove(ctx.selectedPos, *hoveredPos))
     {
-        Piece p = board.getPiece(ctx.selectedPos.x, ctx.selectedPos.y);
+        Piece       p  = board.getPiece(ctx.selectedPos.x, ctx.selectedPos.y);
         const float wx = static_cast<float>(hoveredPos->x) - 3.5f;
         const float wz = static_cast<float>(hoveredPos->y) - 3.5f;
         const float pr = (p.color == PieceColor::White) ? 1.0f : 0.1f;
@@ -300,7 +228,7 @@ void ChessView3D::renderScene(const ChessGame& game, const ViewContext& ctx, con
         glUniform1f(uOpacityLoc, 0.5f);
         glDepthMask(GL_FALSE);
         if (m_pieceRenderer)
-            m_pieceRenderer->draw(p, wx, wz, modelLoc, m_cubeVao);
+            m_pieceRenderer->draw(p, wx, wz, modelLoc, m_unitCube->getVao());
         glDepthMask(GL_TRUE);
         glUniform1f(uOpacityLoc, 1.0f);
     }
@@ -398,32 +326,32 @@ void ChessView3D::draw(ChessGame& game, ViewContext& ctx)
 
         m_visualState.update(ImGui::GetIO().DeltaTime, game);
 
-        const ImVec2 pos = ImGui::GetCursorScreenPos();
+        const ImVec2            pos = ImGui::GetCursorScreenPos();
         std::optional<Position> hoveredPos;
 
         if (ImGui::IsMouseHoveringRect(pos, ImVec2(pos.x + m_width, pos.y + m_height)))
         {
             ImVec2 mousePos = ImGui::GetMousePos();
-            float ndcX = (mousePos.x - pos.x) / static_cast<float>(m_width) * 2.0f - 1.0f;
-            float ndcY = 1.0f - (mousePos.y - pos.y) / static_cast<float>(m_height) * 2.0f;
+            float  ndcX     = (mousePos.x - pos.x) / static_cast<float>(m_width) * 2.0f - 1.0f;
+            float  ndcY     = 1.0f - (mousePos.y - pos.y) / static_cast<float>(m_height) * 2.0f;
 
-            glm::vec4 rayClip = glm::vec4(ndcX, ndcY, -1.0f, 1.0f);
-            glm::vec4 rayEye = glm::inverse(proj) * rayClip;
-            rayEye = glm::vec4(rayEye.x, rayEye.y, -1.0f, 0.0f);
+            glm::vec4 rayClip  = glm::vec4(ndcX, ndcY, -1.0f, 1.0f);
+            glm::vec4 rayEye   = glm::inverse(proj) * rayClip;
+            rayEye             = glm::vec4(rayEye.x, rayEye.y, -1.0f, 0.0f);
             glm::vec3 rayWorld = glm::normalize(glm::vec3(glm::inverse(view) * rayEye));
-            
+
             glm::mat4 invView = glm::inverse(view);
-            glm::vec3 origin = glm::vec3(invView[3]);
-            
+            glm::vec3 origin  = glm::vec3(invView[3]);
+
             // intersect with y=0
             if (rayWorld.y != 0.0f)
             {
                 float t = -origin.y / rayWorld.y;
                 if (t > 0.0f)
                 {
-                    glm::vec3 hit = origin + rayWorld * t;
-                    int boardX = static_cast<int>(std::round(hit.x + 3.5f));
-                    int boardY = static_cast<int>(std::round(hit.z + 3.5f));
+                    glm::vec3 hit    = origin + rayWorld * t;
+                    int       boardX = static_cast<int>(std::round(hit.x + 3.5f));
+                    int       boardY = static_cast<int>(std::round(hit.z + 3.5f));
                     if (boardX >= 0 && boardX < 8 && boardY >= 0 && boardY < 8)
                     {
                         hoveredPos = {boardX, boardY};
@@ -451,15 +379,15 @@ void ChessView3D::draw(ChessGame& game, ViewContext& ctx)
             m_povCam->clearLookDirection();
             m_activeCamera->processMouseDrag(ImGui::GetIO().MouseDelta.x, ImGui::GetIO().MouseDelta.y);
         }
-        
+
         if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
         {
             if (hoveredPos)
             {
-                int x = hoveredPos->x;
-                int y = hoveredPos->y;
-                const auto& board = game.getBoard();
-                const Piece& p = board.getPiece(x, y);
+                int          x     = hoveredPos->x;
+                int          y     = hoveredPos->y;
+                const auto&  board = game.getBoard();
+                const Piece& p     = board.getPiece(x, y);
 
                 if (ctx.selectedPos.x == -1)
                 {
@@ -478,7 +406,7 @@ void ChessView3D::draw(ChessGame& game, ViewContext& ctx)
                 }
             }
         }
-        
+
         if (ImGui::IsItemHovered())
         {
             m_activeCamera->processMouseScroll(ImGui::GetIO().MouseWheel);

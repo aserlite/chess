@@ -8,6 +8,7 @@
 #include "../Logic/Game.hpp"
 #include "3D/BoardRenderer.hpp"
 #include "3D/ChessVisualState.hpp"
+#include "3D/CubeMesh.hpp"
 #include "3D/ICamera.hpp"
 #include "3D/PieceRenderer.hpp"
 #include "3D/PovCamera.hpp"
@@ -49,8 +50,7 @@ private:
 
     std::unique_ptr<glimac::Program> m_program;
 
-    unsigned int m_cubeVao = 0;
-    unsigned int m_cubeVbo = 0;
+    std::unique_ptr<CubeMesh> m_unitCube;
 
     std::unique_ptr<PieceRenderer> m_pieceRenderer;
     std::unique_ptr<Skybox>        m_skyboxNight;
@@ -59,7 +59,6 @@ private:
     int m_width  = 800;
     int m_height = 600;
 
-    void setupBuffers();
     void resizeFBO(int width, int height);
 
     struct MoveAnimation {
