@@ -1,4 +1,5 @@
 #pragma once
+#include <optional>
 #include <glimac/glm.hpp>
 #include "ICamera.hpp"
 #include "Logic/Piece.hpp"
@@ -7,7 +8,7 @@ class PovCamera : public ICamera {
 private:
     float     m_angleX = 0.0f;
     float     m_angleY = 0.0f;
-    glm::vec3 m_position; // The active piece position
+    glm::vec3 m_position{0.0f, 0.0f, 0.0f}; // The active piece position
 
     Position             m_lastValidBoardPos = {3, 3};
     std::optional<float> m_targetAngleX      = std::nullopt;

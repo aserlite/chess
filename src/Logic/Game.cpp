@@ -41,23 +41,41 @@ bool ChessGame::move(Position from, Position to)
             }
         }
 
-        if (target.type == PieceType::King)
-        {
-            m_state = (m_currentTurn == PieceColor::White) ? GameState::WhiteWins : GameState::BlackWins;
-
-            const Piece p = m_board.getPiece(from.x, from.y);
-            m_board.setPiece(to.x, to.y, p);
-            m_board.setPiece(from.x, from.y, Piece{PieceType::None, PieceColor::None});
-
-            m_history.push_back({from, to, toChessNotation(from) + toChessNotation(to) + "#", true});
-            return true;
-        }
-
         const std::string moveStr = toChessNotation(from) + toChessNotation(to);
 
         const Piece p = m_board.getPiece(from.x, from.y);
         m_board.setPiece(to.x, to.y, p);
         m_board.setPiece(from.x, from.y, Piece{PieceType::None, PieceColor::None});
+
+        m_history.push_back({from, to, moveStr, true});
+
+        bool whiteKingAlive = false;
+        bool blackKingAlive = false;
+        for (int y = 0; y < static_cast<int>(Board::SIZE); ++y)
+        {
+            for (int x = 0; x < static_cast<int>(Board::SIZE); ++x)
+            {
+                Piece current = m_board.getPiece(x, y);
+                if (current.type == PieceType::King)
+                {
+                    if (current.color == PieceColor::White) whiteKingAlive = true;
+                    if (current.color == PieceColor::Black) blackKingAlive = true;
+                }
+            }
+        }
+
+        if (!whiteKingAlive || !blackKingAlive)
+        {
+            if (!whiteKingAlive && !blackKingAlive)
+                m_state = (m_currentTurn == PieceColor::White) ? GameState::WhiteWins : GameState::BlackWins;
+            else if (!whiteKingAlive)
+                m_state = GameState::BlackWins;
+            else
+                m_state = GameState::WhiteWins;
+
+            m_history.back().description += "#";
+            return true;
+        }
 
         const bool isPawn = (p.type == PieceType::Pawn);
         const bool endRow = (p.color == PieceColor::White && to.y == 0) || (p.color == PieceColor::Black && to.y == 7);
@@ -69,7 +87,6 @@ bool ChessGame::move(Position from, Position to)
             return true;
         }
 
-        m_history.push_back({from, to, moveStr, true});
         changeTurn();
         return true;
     }
