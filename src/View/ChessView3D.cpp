@@ -225,8 +225,24 @@ void ChessView3D::renderScene(const ChessGame& game, const ViewContext& ctx, con
             const float pr = (p.color == PieceColor::White) ? 1.0f : 0.1f;
             glUniform3f(uColorOverrideLoc, pr, pr, pr);
 
+            bool isHoveredTarget = (ctx.selectedPos.x != -1 && hoveredPos.has_value() &&
+                                    hoveredPos->x == x && hoveredPos->y == y &&
+                                    game.isValidMove(ctx.selectedPos, {x, y}));
+
+            if (isHoveredTarget)
+            {
+                glUniform1f(uOpacityLoc, 0.0f);
+                glDepthMask(GL_FALSE);
+            }
+
             if (m_pieceRenderer)
                 m_pieceRenderer->draw(p, wx, wz, modelLoc, m_cubeVao);
+
+            if (isHoveredTarget)
+            {
+                glDepthMask(GL_TRUE);
+                glUniform1f(uOpacityLoc, 1.0f);
+            }
         }
     }
 
