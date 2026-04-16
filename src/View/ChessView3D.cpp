@@ -238,7 +238,7 @@ void ChessView3D::renderScene(const ChessGame& game, const glm::mat4& view, cons
 
         if (m_pieceRenderer)
         {
-            m_pieceRenderer->draw(anim.piece, pos.x, pos.z, modelLoc, m_cubeVao);
+            m_pieceRenderer->draw(anim.piece, pos.x, pos.z, modelLoc, m_cubeVao, pos.y);
         }
     }
 
@@ -253,7 +253,19 @@ void ChessView3D::draw(const ChessGame& game, ViewContext& ctx)
 {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
     ImGui::SetNextWindowSize(ImVec2(600, 600), ImGuiCond_FirstUseEver);
-    ImGui::Begin("Vue 3D", nullptr, ImGuiWindowFlags_MenuBar);
+    const ImGuiViewport* viewport = ImGui::GetMainViewport();
+
+    // 2. Set the next window position and size to match the viewport
+    ImGui::SetNextWindowPos(viewport->WorkPos);
+    ImGui::SetNextWindowSize(viewport->WorkSize);
+
+    // 3. Set flags to make it feel like a background layer (no title bar, no resize, etc.)
+    ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+
+    // 4. Start the window
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f); // Make corners sharp
+    ImGui::Begin("Vue 3D", nullptr, window_flags);
+    ImGui::PopStyleVar();
 
     if (ImGui::BeginMenuBar())
     {

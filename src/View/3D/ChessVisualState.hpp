@@ -18,7 +18,10 @@ public:
             float t  = progress;
             float wx = (from.x - 3.5f) + (to.x - from.x) * t;
             float wz = (from.y - 3.5f) + (to.y - from.y) * t;
-            return glm::vec3(wx, 0.0f, wz);
+
+            float wy = std::sin(t * 3.14159265f) * 1.5f;
+
+            return glm::vec3(wx, wy, wz);
         }
     };
 

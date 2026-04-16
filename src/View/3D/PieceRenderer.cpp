@@ -12,7 +12,7 @@ PieceRenderer::PieceRenderer(const std::string& prefixToUse)
     m_models[PieceType::King].load(prefixToUse + "models/king/king.obj");
 }
 
-void PieceRenderer::draw(const Piece& p, float wx, float wz, GLint modelLoc, GLuint fallbackVao)
+void PieceRenderer::draw(const Piece& p, float wx, float wz, GLint modelLoc, GLuint fallbackVao, float wy)
 {
     if (m_models.count(p.type) > 0)
     {
@@ -50,7 +50,7 @@ void PieceRenderer::draw(const Piece& p, float wx, float wz, GLint modelLoc, GLu
         default: break;
         }
 
-        glm::mat4 pModel = glm::translate(glm::mat4(1.0f), glm::vec3(wx, 0.0f, wz) + offset);
+        glm::mat4 pModel = glm::translate(glm::mat4(1.0f), glm::vec3(wx, wy, wz) + offset);
         pModel           = glm::scale(pModel, glm::vec3(scaleFactor, scaleFactor, scaleFactor));
 
         if (rotationY != 0.0f)
@@ -69,7 +69,7 @@ void PieceRenderer::draw(const Piece& p, float wx, float wz, GLint modelLoc, GLu
     else
     {
         glBindVertexArray(fallbackVao);
-        glm::mat4 pModel = glm::translate(glm::mat4(1.0f), glm::vec3(wx, 0.35f, wz));
+        glm::mat4 pModel = glm::translate(glm::mat4(1.0f), glm::vec3(wx, wy + 0.35f, wz));
         pModel           = glm::scale(pModel, glm::vec3(0.5f, 0.7f, 0.5f));
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(pModel));
 
