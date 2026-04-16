@@ -1,4 +1,5 @@
 #include "BoardRenderer.hpp"
+#include "VictoryAnimator.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <array>
@@ -33,7 +34,7 @@ GLuint BoardRenderer::loadTexture(const std::string& path)
     return textureId;
 }
 
-void BoardRenderer::draw(GLint modelLoc, GLint uColorOverrideLoc, GLint uUseOverrideLoc, GLint uHasTextureLoc, GLint uTextureLoc, GLuint cubeVao, const ChessGame& game, const ViewContext& ctx, std::optional<Position> hoveredPos)
+void BoardRenderer::draw(GLint modelLoc, GLint uColorOverrideLoc, GLint uUseOverrideLoc, GLint uHasTextureLoc, GLint uTextureLoc, GLuint cubeVao, const ChessGame& game, const ViewContext& ctx, std::optional<Position> hoveredPos, const VictoryAnimator* va)
 {
     glBindVertexArray(cubeVao);
 
@@ -87,6 +88,12 @@ void BoardRenderer::draw(GLint modelLoc, GLint uColorOverrideLoc, GLint uUseOver
                 glUniform3f(uColorOverrideLoc, 1.2f, 1.2f, 0.8f); // Hovered: Brighter yellow tinted
             else
                 glUniform3f(uColorOverrideLoc, 1.0f, 1.0f, 1.0f); // normal
+
+            if (va && va->isActive())
+            {
+                const glm::vec3 dc = va->getDiscoColor(static_cast<float>(x + y) * 0.09f);
+                glUniform3f(uColorOverrideLoc, dc.r, dc.g, dc.b);
+            }
 
             glUniform1i(uUseOverrideLoc, 1);
             glDrawArrays(GL_TRIANGLES, 0, 36);

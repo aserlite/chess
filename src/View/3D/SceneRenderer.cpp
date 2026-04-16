@@ -74,11 +74,12 @@ void SceneRenderer::drawScene(const ChessGame& game, const ViewContext& ctx,
         glBindVertexArray(cubeVao);
 
     const auto& board = game.getBoard();
+    const VictoryAnimator& va = visualState.getVictoryAnimator();
 
     // BOARD
     if (m_boardRenderer)
     {
-        m_boardRenderer->draw(m_modelLoc, m_uColorOverrideLoc, m_uUseOverrideLoc, m_uHasTextureLoc, m_uTextureLoc, cubeVao, game, ctx, hoveredPos);
+        m_boardRenderer->draw(m_modelLoc, m_uColorOverrideLoc, m_uUseOverrideLoc, m_uHasTextureLoc, m_uTextureLoc, cubeVao, game, ctx, hoveredPos, &va);
     }
 
     glUniform1i(m_uHasTextureLoc, 0);
@@ -110,8 +111,18 @@ void SceneRenderer::drawScene(const ChessGame& game, const ViewContext& ctx,
             // Normal static draw
             const float wx = static_cast<float>(x) - 3.5f;
             const float wz = static_cast<float>(y) - 3.5f;
-            const float pr = (p.color == PieceColor::White) ? 1.0f : 0.1f;
-            glUniform3f(m_uColorOverrideLoc, pr, pr, pr);
+
+            if (va.isWinnerPiece(p.color))
+            {
+                const float     phase = wx * 0.1f + wz * 0.07f;
+                const glm::vec3 dc    = va.getDiscoColor(phase);
+                glUniform3f(m_uColorOverrideLoc, dc.r, dc.g, dc.b);
+            }
+            else
+            {
+                const float pr = (p.color == PieceColor::White) ? 1.0f : 0.1f;
+                glUniform3f(m_uColorOverrideLoc, pr, pr, pr);
+            }
 
             bool isHoveredTarget = (ctx.selectedPos.x != -1 && hoveredPos.has_value() && hoveredPos->x == x && hoveredPos->y == y && game.isValidMove(ctx.selectedPos, {x, y}));
 
@@ -121,8 +132,12 @@ void SceneRenderer::drawScene(const ChessGame& game, const ViewContext& ctx,
                 glDepthMask(GL_FALSE);
             }
 
+            const glm::mat4 dance = va.isWinnerPiece(p.color)
+                                        ? va.getDanceMatrix(wx, wz)
+                                        : glm::mat4(1.0f);
+
             if (m_pieceRenderer)
-                m_pieceRenderer->draw(p, wx, wz, m_modelLoc, cubeVao);
+                m_pieceRenderer->draw(p, wx, wz, m_modelLoc, cubeVao, 0.0f, dance);
 
             if (isHoveredTarget)
             {

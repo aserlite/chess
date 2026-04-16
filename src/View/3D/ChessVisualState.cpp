@@ -29,6 +29,7 @@ void ChessVisualState::update(float deltaTime, const ChessGame& game)
     {
         m_activeAnimations.clear();
         m_lastHistorySize = history.size();
+        m_victoryAnimator.reset();
     }
 
     constexpr float animDuration = 0.5f;
@@ -44,6 +45,8 @@ void ChessVisualState::update(float deltaTime, const ChessGame& game)
     std::erase_if(m_activeAnimations, [](const MovingPiece& anim) {
         return anim.progress >= 1.0f;
     });
+
+    m_victoryAnimator.update(deltaTime, game);
 }
 
 std::optional<ChessVisualState::MovingPiece> ChessVisualState::getActiveAnimation() const

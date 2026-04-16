@@ -8,6 +8,8 @@
 #include "../../Logic/Game.hpp"
 #include "../ViewContext.hpp"
 
+class VictoryAnimator;
+
 class BoardRenderer {
 public:
     BoardRenderer(const std::string& prefixToUse);
@@ -21,7 +23,7 @@ public:
     BoardRenderer(BoardRenderer&&)            = default;
     BoardRenderer& operator=(BoardRenderer&&) = default;
 
-    void draw(GLint modelLoc, GLint uColorOverrideLoc, GLint uUseOverrideLoc, GLint uHasTextureLoc, GLint uTextureLoc, GLuint cubeVao, const ChessGame& game, const ViewContext& ctx, std::optional<Position> hoveredPos);
+    void draw(GLint modelLoc, GLint uColorOverrideLoc, GLint uUseOverrideLoc, GLint uHasTextureLoc, GLint uTextureLoc, GLuint cubeVao, const ChessGame& game, const ViewContext& ctx, std::optional<Position> hoveredPos, const VictoryAnimator* va = nullptr);
 
 private:
     GLuint m_textureLightTile = 0;

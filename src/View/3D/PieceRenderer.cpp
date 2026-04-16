@@ -12,7 +12,7 @@ PieceRenderer::PieceRenderer(const std::string& prefixToUse)
     m_models[PieceType::King].load(prefixToUse + "models/king/king.obj");
 }
 
-void PieceRenderer::draw(const Piece& p, float wx, float wz, GLint modelLoc, GLuint fallbackVao, float wy)
+void PieceRenderer::draw(const Piece& p, float wx, float wz, GLint modelLoc, GLuint fallbackVao, float wy, const glm::mat4& danceMatrix)
 {
     if (m_models.count(p.type) > 0)
     {
@@ -50,7 +50,7 @@ void PieceRenderer::draw(const Piece& p, float wx, float wz, GLint modelLoc, GLu
         default: break;
         }
 
-        glm::mat4 pModel = glm::translate(glm::mat4(1.0f), glm::vec3(wx, wy, wz) + offset);
+        glm::mat4 pModel = glm::translate(glm::mat4(1.0f), glm::vec3(wx, wy, wz) + offset) * danceMatrix;
         pModel           = glm::scale(pModel, glm::vec3(scaleFactor, scaleFactor, scaleFactor));
 
         if (rotationY != 0.0f)
