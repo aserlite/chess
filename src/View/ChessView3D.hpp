@@ -29,12 +29,12 @@ public:
     ChessView3D& operator=(ChessView3D&&) = default;
 
     void init();
-    void draw(const ChessGame& game, ViewContext& ctx);
+    void draw(ChessGame& game, ViewContext& ctx);
 
 private:
     void setupFramebuffer(const ImVec2& size);
     void updateAnimations(const ChessGame& game);
-    void renderScene(const ChessGame& game, const glm::mat4& view, const glm::mat4& proj);
+    void renderScene(const ChessGame& game, const ViewContext& ctx, const glm::mat4& view, const glm::mat4& proj, std::optional<Position> hoveredPos);
 
     std::unique_ptr<TrackballCamera> m_trackballCam;
     std::unique_ptr<PovCamera>       m_povCam;

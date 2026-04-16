@@ -10,6 +10,7 @@ uniform bool uUseOverride;
 
 uniform sampler2D uTexture;
 uniform bool uHasTexture;
+uniform float uOpacity;
 
 void main() {
     vec3 baseColor = uUseOverride ? uColorOverride : vec3(0.8);
@@ -28,5 +29,5 @@ void main() {
     vec3 diffuse = diff * 0.7 * baseColor;
     
     vec3 result = ambient + diffuse;
-    FragColor = vec4(result, 1.0);
+    FragColor = vec4(result, uOpacity);
 }

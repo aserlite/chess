@@ -4,6 +4,9 @@
 #include <glimac/Image.hpp>
 #include <glimac/glm.hpp>
 #include <string>
+#include <optional>
+#include "../../Logic/Game.hpp"
+#include "../ViewContext.hpp"
 
 class BoardRenderer {
 public:
@@ -18,7 +21,7 @@ public:
     BoardRenderer(BoardRenderer&&)            = default;
     BoardRenderer& operator=(BoardRenderer&&) = default;
 
-    void draw(GLint modelLoc, GLint uColorOverrideLoc, GLint uUseOverrideLoc, GLint uHasTextureLoc, GLint uTextureLoc, GLuint cubeVao);
+    void draw(GLint modelLoc, GLint uColorOverrideLoc, GLint uUseOverrideLoc, GLint uHasTextureLoc, GLint uTextureLoc, GLuint cubeVao, const ChessGame& game, const ViewContext& ctx, std::optional<Position> hoveredPos);
 
 private:
     GLuint m_textureLightTile = 0;

@@ -33,7 +33,7 @@ GLuint BoardRenderer::loadTexture(const std::string& path)
     return textureId;
 }
 
-void BoardRenderer::draw(GLint modelLoc, GLint uColorOverrideLoc, GLint uUseOverrideLoc, GLint uHasTextureLoc, GLint uTextureLoc, GLuint cubeVao)
+void BoardRenderer::draw(GLint modelLoc, GLint uColorOverrideLoc, GLint uUseOverrideLoc, GLint uHasTextureLoc, GLint uTextureLoc, GLuint cubeVao, const ChessGame& game, const ViewContext& ctx, std::optional<Position> hoveredPos)
 {
     glBindVertexArray(cubeVao);
 
@@ -59,9 +59,6 @@ void BoardRenderer::draw(GLint modelLoc, GLint uColorOverrideLoc, GLint uUseOver
         glDrawArrays(GL_TRIANGLES, 0, 36);
     }
 
-    glUniform1i(uUseOverrideLoc, 0);
-    glUniform1i(uHasTextureLoc, 1);
-
     for (int y = 0; y < 8; ++y)
     {
         for (int x = 0; x < 8; ++x)
@@ -82,7 +79,15 @@ void BoardRenderer::draw(GLint modelLoc, GLint uColorOverrideLoc, GLint uUseOver
             glUniform1i(uTextureLoc, 0);
             glUniform1i(uHasTextureLoc, 1);
 
-            glUniform3f(uColorOverrideLoc, 1.0f, 1.0f, 1.0f);
+            if (ctx.selectedPos.x == x && ctx.selectedPos.y == y)
+                glUniform3f(uColorOverrideLoc, 0.0f, 0.8f, 0.0f); // Selected: Green
+            else if (ctx.selectedPos.x != -1 && game.isValidMove(ctx.selectedPos, {x, y}))
+                glUniform3f(uColorOverrideLoc, 0.2f, 0.5f, 1.0f); // Valid move: Blueish
+            else if (hoveredPos && hoveredPos->x == x && hoveredPos->y == y)
+                glUniform3f(uColorOverrideLoc, 1.2f, 1.2f, 0.8f); // Hovered: Brighter yellow tinted
+            else
+                glUniform3f(uColorOverrideLoc, 1.0f, 1.0f, 1.0f); // normal
+
             glUniform1i(uUseOverrideLoc, 1);
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }

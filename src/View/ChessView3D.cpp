@@ -166,7 +166,7 @@ void ChessView3D::setupFramebuffer(const ImVec2& size)
     }
 }
 
-void ChessView3D::renderScene(const ChessGame& game, const glm::mat4& view, const glm::mat4& proj)
+void ChessView3D::renderScene(const ChessGame& game, const ViewContext& ctx, const glm::mat4& view, const glm::mat4& proj, std::optional<Position> hoveredPos)
 {
     const unsigned int progId            = m_program ? m_program->getGLId() : 0;
     const GLint        projLoc           = glGetUniformLocation(progId, "projection");
@@ -176,9 +176,11 @@ void ChessView3D::renderScene(const ChessGame& game, const glm::mat4& view, cons
     const GLint        uUseOverrideLoc   = glGetUniformLocation(progId, "uUseOverride");
     const GLint        uTextureLoc       = glGetUniformLocation(progId, "uTexture");
     const GLint        uHasTextureLoc    = glGetUniformLocation(progId, "uHasTexture");
+    const GLint        uOpacityLoc       = glGetUniformLocation(progId, "uOpacity");
 
     glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(proj));
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+    glUniform1f(uOpacityLoc, 1.0f);
 
     glBindVertexArray(m_cubeVao);
 
@@ -187,7 +189,7 @@ void ChessView3D::renderScene(const ChessGame& game, const glm::mat4& view, cons
     // BOARD
     if (m_boardRenderer)
     {
-        m_boardRenderer->draw(modelLoc, uColorOverrideLoc, uUseOverrideLoc, uHasTextureLoc, uTextureLoc, m_cubeVao);
+        m_boardRenderer->draw(modelLoc, uColorOverrideLoc, uUseOverrideLoc, uHasTextureLoc, uTextureLoc, m_cubeVao, game, ctx, hoveredPos);
     }
 
     glUniform1i(uHasTextureLoc, 0);
@@ -247,9 +249,29 @@ void ChessView3D::renderScene(const ChessGame& game, const glm::mat4& view, cons
     {
         m_skybox->render(proj, view);
     }
+
+    // 3. Ghost piece (draw last with transparency)
+    if (m_program)
+        m_program->use();
+    glBindVertexArray(m_cubeVao);
+    if (ctx.selectedPos.x != -1 && hoveredPos.has_value() && game.isValidMove(ctx.selectedPos, *hoveredPos))
+    {
+        Piece p = board.getPiece(ctx.selectedPos.x, ctx.selectedPos.y);
+        const float wx = static_cast<float>(hoveredPos->x) - 3.5f;
+        const float wz = static_cast<float>(hoveredPos->y) - 3.5f;
+        const float pr = (p.color == PieceColor::White) ? 1.0f : 0.1f;
+        glUniform3f(uColorOverrideLoc, pr, pr, pr);
+
+        glUniform1f(uOpacityLoc, 0.5f);
+        glDepthMask(GL_FALSE);
+        if (m_pieceRenderer)
+            m_pieceRenderer->draw(p, wx, wz, modelLoc, m_cubeVao);
+        glDepthMask(GL_TRUE);
+        glUniform1f(uOpacityLoc, 1.0f);
+    }
 }
 
-void ChessView3D::draw(const ChessGame& game, ViewContext& ctx)
+void ChessView3D::draw(ChessGame& game, ViewContext& ctx)
 {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
     ImGui::SetNextWindowSize(ImVec2(600, 600), ImGuiCond_FirstUseEver);
@@ -328,6 +350,8 @@ void ChessView3D::draw(const ChessGame& game, ViewContext& ctx)
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glEnable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         if (m_program)
             m_program->use();
@@ -339,28 +363,92 @@ void ChessView3D::draw(const ChessGame& game, ViewContext& ctx)
 
         m_visualState.update(ImGui::GetIO().DeltaTime, game);
 
-        renderScene(game, view, proj);
+        const ImVec2 pos = ImGui::GetCursorScreenPos();
+        std::optional<Position> hoveredPos;
+
+        if (ImGui::IsMouseHoveringRect(pos, ImVec2(pos.x + m_width, pos.y + m_height)))
+        {
+            ImVec2 mousePos = ImGui::GetMousePos();
+            float ndcX = (mousePos.x - pos.x) / static_cast<float>(m_width) * 2.0f - 1.0f;
+            float ndcY = 1.0f - (mousePos.y - pos.y) / static_cast<float>(m_height) * 2.0f;
+
+            glm::vec4 rayClip = glm::vec4(ndcX, ndcY, -1.0f, 1.0f);
+            glm::vec4 rayEye = glm::inverse(proj) * rayClip;
+            rayEye = glm::vec4(rayEye.x, rayEye.y, -1.0f, 0.0f);
+            glm::vec3 rayWorld = glm::normalize(glm::vec3(glm::inverse(view) * rayEye));
+            
+            glm::mat4 invView = glm::inverse(view);
+            glm::vec3 origin = glm::vec3(invView[3]);
+            
+            // intersect with y=0
+            if (rayWorld.y != 0.0f)
+            {
+                float t = -origin.y / rayWorld.y;
+                if (t > 0.0f)
+                {
+                    glm::vec3 hit = origin + rayWorld * t;
+                    int boardX = static_cast<int>(std::round(hit.x + 3.5f));
+                    int boardY = static_cast<int>(std::round(hit.z + 3.5f));
+                    if (boardX >= 0 && boardX < 8 && boardY >= 0 && boardY < 8)
+                    {
+                        hoveredPos = {boardX, boardY};
+                    }
+                }
+            }
+        }
+
+        renderScene(game, ctx, view, proj, hoveredPos);
 
         glBindVertexArray(0);
         glDisable(GL_DEPTH_TEST);
+        glDisable(GL_BLEND);
 
         glBindFramebuffer(GL_FRAMEBUFFER, previous_fbo);
         glViewport(previous_viewport.at(0), previous_viewport.at(1), previous_viewport.at(2), previous_viewport.at(3));
 
-        const ImVec2 pos = ImGui::GetCursorScreenPos();
         ImGui::Image(reinterpret_cast<void*>(static_cast<intptr_t>(m_texture)), ImVec2(static_cast<float>(m_width), static_cast<float>(m_height)), ImVec2(0, 1), ImVec2(1, 0)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast, performance-no-int-to-ptr)
 
         ImGui::SetCursorScreenPos(pos);
         ImGui::InvisibleButton("##3DViewBtn", ImVec2(static_cast<float>(m_width), static_cast<float>(m_height)));
 
-        if (ImGui::IsItemActive())
+        if (ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Left, 1.0f))
         {
             m_povCam->clearLookDirection();
             m_activeCamera->processMouseDrag(ImGui::GetIO().MouseDelta.x, ImGui::GetIO().MouseDelta.y);
         }
+        
+        if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+        {
+            if (hoveredPos)
+            {
+                int x = hoveredPos->x;
+                int y = hoveredPos->y;
+                const auto& board = game.getBoard();
+                const Piece& p = board.getPiece(x, y);
+
+                if (ctx.selectedPos.x == -1)
+                {
+                    if (!p.isEmpty() && p.color == game.getCurrentTurn())
+                        ctx.selectedPos = {x, y};
+                }
+                else
+                {
+                    Position targetPos = {x, y};
+                    if (ctx.selectedPos.x == x && ctx.selectedPos.y == y)
+                        ctx.selectedPos = {-1, -1};
+                    else if (game.move(ctx.selectedPos, targetPos))
+                        ctx.selectedPos = {-1, -1};
+                    else if (!p.isEmpty() && p.color == game.getCurrentTurn())
+                        ctx.selectedPos = {x, y};
+                }
+            }
+        }
+        
         if (ImGui::IsItemHovered())
         {
             m_activeCamera->processMouseScroll(ImGui::GetIO().MouseWheel);
+            if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+                ctx.selectedPos = {-1, -1};
         }
     }
 
