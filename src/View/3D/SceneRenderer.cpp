@@ -10,14 +10,7 @@ SceneRenderer::SceneRenderer(const std::string& assetPrefix, const std::string& 
     const std::string vs = shaderPrefix + "chess3D.vs.glsl";
     const std::string fs = shaderPrefix + "chess3D.fs.glsl";
 
-    try
-    {
-        m_program = std::make_unique<glimac::Program>(glimac::loadProgram(vs.c_str(), fs.c_str()));
-    }
-    catch (...)
-    {
-        std::cerr << "Impossible de charger les shaders 3D\n";
-    }
+    m_program = std::make_unique<glimac::Program>(glimac::loadProgram(vs.c_str(), fs.c_str()));
 
     if (m_program)
     {

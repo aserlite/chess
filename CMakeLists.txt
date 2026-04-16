@@ -29,9 +29,12 @@ target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_20)
 # This forces you to take warnings into account, which is a good practice because warnings are here for a reason and can save you from a lot of bugs!
 # If this is too strict for you, you can remove /WX and -Werror.
 if(MSVC)
-# target_compile_options(${PROJECT_NAME} PRIVATE /WX /W4)
+    # /EHsc active les exceptions standards C++ pour MSVC (et calme Clang-Tidy sur Windows)
+    # /W4 active les bons warnings
+    target_compile_options(${PROJECT_NAME} PRIVATE /W4 /EHsc)
 else()
-    # target_compile_options(${PROJECT_NAME} PRIVATE -Werror -Wall -Wextra -Wpedantic -pedantic-errors -Wimplicit-fallthrough)
+    # -fexceptions force l'activation pour GCC/Clang
+    target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic -Wno-unknown-pragmas -fexceptions)
 endif()
 
 # Set the folder where the executable is created
@@ -76,8 +79,6 @@ add_subdirectory(glimac)
 target_link_libraries(${PROJECT_NAME} PRIVATE glimac)
 set_target_properties(glimac PROPERTIES CXX_CLANG_TIDY "")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Wno-unknown-pragmas")
-
 # ---  Config des tests unitaires ---
 include(FetchContent)
 FetchContent_Declare(
@@ -98,6 +99,11 @@ add_executable(unit_tests
 
 target_link_libraries(unit_tests PRIVATE Catch2::Catch2WithMain)
 target_include_directories(unit_tests PRIVATE src)
+if(MSVC)
+    target_compile_options(unit_tests PRIVATE /EHsc)
+else()
+    target_compile_options(unit_tests PRIVATE -fexceptions)
+endif()
 target_compile_features(unit_tests PRIVATE cxx_std_20)
 
 include(Catch)
