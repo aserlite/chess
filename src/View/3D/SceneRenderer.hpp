@@ -40,4 +40,9 @@ private:
     GLint m_uHasTextureLoc    = -1;
     GLint m_uOpacityLoc       = -1;
     GLint m_uIsWhiteTurnLoc   = -1;
+
+    // Sphere for meteors
+    GLuint  m_sphereVao         = 0;
+    GLuint  m_sphereVbo         = 0;
+    GLsizei m_sphereVertexCount = 0;
 };

@@ -2,6 +2,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
+#include <glimac/Sphere.hpp>
+#include "VictoryAnimator.hpp"
 
 SceneRenderer::SceneRenderer(const std::string& assetPrefix, const std::string& shaderPrefix)
 {
@@ -52,6 +54,29 @@ SceneRenderer::SceneRenderer(const std::string& assetPrefix, const std::string& 
         assetPrefix + "skyboxes/day/front.png",
         assetPrefix + "skyboxes/day/back.png"};
     m_skyboxDay = std::make_unique<Skybox>(shaderPrefix, facesDay);
+
+    // Initialize Sphere for meteors
+    glimac::Sphere sphere(1.0f, 32, 16);
+    m_sphereVertexCount = sphere.getVertexCount();
+
+    glGenVertexArrays(1, &m_sphereVao);
+    glGenBuffers(1, &m_sphereVbo);
+
+    glBindVertexArray(m_sphereVao);
+    glBindBuffer(GL_ARRAY_BUFFER, m_sphereVbo);
+    glBufferData(GL_ARRAY_BUFFER, m_sphereVertexCount * sizeof(glimac::ShapeVertex), sphere.getDataPointer(), GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(0); // position
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex), (const GLvoid*)offsetof(glimac::ShapeVertex, position));
+
+    glEnableVertexAttribArray(1); // normal
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex), (const GLvoid*)offsetof(glimac::ShapeVertex, normal));
+
+    glEnableVertexAttribArray(2); // texCoords
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex), (const GLvoid*)offsetof(glimac::ShapeVertex, texCoords));
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
 }
 
 void SceneRenderer::drawScene(const ChessGame& game, const ViewContext& ctx,
@@ -159,6 +184,27 @@ void SceneRenderer::drawScene(const ChessGame& game, const ViewContext& ctx,
         {
             m_pieceRenderer->draw(anim.piece, pos.x, pos.z, m_modelLoc, cubeVao, pos.y);
         }
+    }
+
+    // METEORS
+    glBindVertexArray(m_sphereVao);
+    for (const auto& meteor : visualState.getActiveMeteors())
+    {
+        float wx = static_cast<float>(meteor.pos.x) - 3.5f;
+        float wz = static_cast<float>(meteor.pos.y) - 3.5f;
+        float wy = 10.0f * (1.0f - meteor.progress);
+
+        // Bright orange/ember color
+        glUniform3f(m_uColorOverrideLoc, 2.0f, 0.5f, 0.0f);
+        glUniform1i(m_uUseOverrideLoc, 1);
+
+        glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(wx, wy, wz));
+        model           = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.4f));
+        glUniformMatrix4fv(m_modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+
+        glDrawArrays(GL_TRIANGLES, 0, m_sphereVertexCount);
+
+        glUniform1i(m_uUseOverrideLoc, 0);
     }
 
     // SKYBOX

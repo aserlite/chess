@@ -22,12 +22,20 @@ void ChessVisualState::update(float deltaTime, const ChessGame& game)
 
                 m_activeAnimations.push_back(anim);
             }
+            else if (move.description == "METEOR")
+            {
+                MeteorAnim anim;
+                anim.pos      = move.to;
+                anim.progress = 0.0f;
+                m_activeMeteors.push_back(anim);
+            }
         }
         m_lastHistorySize = history.size();
     }
     else if (history.size() < m_lastHistorySize)
     {
         m_activeAnimations.clear();
+        m_activeMeteors.clear();
         m_lastHistorySize = history.size();
         m_victoryAnimator.reset();
     }
@@ -44,6 +52,15 @@ void ChessVisualState::update(float deltaTime, const ChessGame& game)
 
     std::erase_if(m_activeAnimations, [](const MovingPiece& anim) {
         return anim.progress >= 1.0f;
+    });
+
+    for (auto& meteor : m_activeMeteors)
+    {
+        meteor.progress += deltaTime * 1.5f; // Falls in ~0.66s
+    }
+
+    std::erase_if(m_activeMeteors, [](const MeteorAnim& m) {
+        return m.progress >= 1.0f;
     });
 
     m_victoryAnimator.update(deltaTime, game);

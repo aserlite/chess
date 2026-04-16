@@ -12,13 +12,6 @@ enum class GameState {
     BlackWins
 };
 
-struct MoveLog {
-    Position    from = {-1, -1};
-    Position    to   = {-1, -1};
-    std::string description;
-    bool        actuallyMoved = true;
-};
-
 struct GameSnapshot {
     Board      board;
     PieceColor currentTurn;

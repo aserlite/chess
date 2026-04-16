@@ -6,6 +6,13 @@
 #include <vector>
 #include "Board.hpp"
 
+struct MoveLog {
+    Position    from = {-1, -1};
+    Position    to   = {-1, -1};
+    std::string description;
+    bool        actuallyMoved = true;
+};
+
 class IGameRule {
 public:
     IGameRule()          = default;
@@ -21,7 +28,7 @@ public:
 
     virtual bool overrideMove(Board& /*board*/, Position /*from*/, Position /*to*/) { return false; }
 
-    virtual void onTurnStart(Board& /*board*/, PieceColor /*turn*/) {}
+    virtual void onTurnStart(Board& /*board*/, PieceColor /*turn*/, std::vector<MoveLog>& /*history*/) {}
 
     virtual void                      onPieceCaptured(Board& /*board*/, Position /*pos*/) {}
     [[nodiscard]] virtual std::string getRuleName() const  = 0;

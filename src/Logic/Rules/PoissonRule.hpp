@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../IGameRule.hpp"
 #include <random>
+#include "../IGameRule.hpp"
 
 /**
  * @brief Loi de Poisson : "La Pluie de Météores"
@@ -17,7 +17,7 @@ public:
     [[nodiscard]] std::string getMathStats() const override;
 
 private:
-    double m_lambda;
-    std::mt19937 m_gen;
+    double                                 m_lambda;
+    std::mt19937                           m_gen;
     std::uniform_real_distribution<double> m_uniformDist;
 };

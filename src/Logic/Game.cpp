@@ -58,8 +58,10 @@ bool ChessGame::move(Position from, Position to)
                 Piece current = m_board.getPiece(x, y);
                 if (current.type == PieceType::King)
                 {
-                    if (current.color == PieceColor::White) whiteKingAlive = true;
-                    if (current.color == PieceColor::Black) blackKingAlive = true;
+                    if (current.color == PieceColor::White)
+                        whiteKingAlive = true;
+                    if (current.color == PieceColor::Black)
+                        blackKingAlive = true;
                 }
             }
         }
@@ -133,7 +135,7 @@ void ChessGame::changeTurn()
 
     for (const auto& rule : m_activeRules)
     {
-        rule->onTurnStart(m_board, m_currentTurn);
+        rule->onTurnStart(m_board, m_currentTurn, m_history);
     }
 }
 

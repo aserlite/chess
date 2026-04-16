@@ -10,7 +10,7 @@ ExponentialRule::ExponentialRule(double lambda, double threshold)
 {
 }
 
-void ExponentialRule::onTurnStart(Board& board, PieceColor /*turn*/)
+void ExponentialRule::onTurnStart(Board& board, PieceColor /*turn*/, std::vector<MoveLog>& /*history*/)
 {
     std::uniform_real_distribution<double> dist(0.0, 1.0);
     double u = 0.0;

@@ -7,7 +7,7 @@ class ExponentialRule : public IGameRule {
 public:
     explicit ExponentialRule(double lambda = 1.0, double threshold = 2.0);
 
-    void onTurnStart(Board& board, PieceColor turn) override;
+    void onTurnStart(Board& board, PieceColor turn, std::vector<MoveLog>& history) override;
 
     [[nodiscard]] std::string getRuleName() const override;
     [[nodiscard]] std::string getMathStats() const override;
