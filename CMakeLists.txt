@@ -77,6 +77,11 @@ target_link_libraries(${PROJECT_NAME} PRIVATE glimac)
 set_target_properties(glimac PROPERTIES CXX_CLANG_TIDY "")
 
 if(MSVC)
+    string(REGEX REPLACE "/EHsc" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc")
+endif()
+
+if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
 else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Wno-unknown-pragmas")
