@@ -1,20 +1,17 @@
 #include "ChessView3D.hpp"
 #include <glad/glad.h>
-#include <algorithm>
 #include <array>
-#include <cmath>
 #include <glimac/glm.hpp>
 #include <iostream>
 #include "3D/PieceRenderer.hpp"
 #include "3D/Skybox.hpp"
+#include "Logic/Piece.hpp"
 
 ChessView3D::ChessView3D()
     : m_trackballCam(std::make_unique<TrackballCamera>())
     , m_povCam(std::make_unique<PovCamera>())
-    , m_activeCamera(nullptr)
+    , m_activeCamera(m_trackballCam.get())
 {
-    // Now you can safely point it to the trackball
-    m_activeCamera = m_trackballCam.get();
 }
 
 ChessView3D::~ChessView3D()
@@ -169,43 +166,6 @@ void ChessView3D::setupFramebuffer(const ImVec2& size)
     }
 }
 
-void ChessView3D::updateAnimations(const ChessGame& game)
-{
-    const auto& history = game.getHistory();
-    const auto& board   = game.getBoard();
-    if (history.size() > m_lastHistorySize)
-    {
-        const auto& latest = history.back();
-        if (latest.actuallyMoved && latest.from.x != -1)
-        {
-            MoveAnimation anim;
-            anim.from     = latest.from;
-            anim.to       = latest.to;
-            anim.piece    = board.getPiece(latest.to.x, latest.to.y);
-            anim.progress = 0.0f;
-            m_activeAnim  = anim;
-        }
-        m_lastHistorySize = history.size();
-    }
-    else if (history.size() < m_lastHistorySize)
-    {
-        // Undo happened, cancel animation
-        m_activeAnim.reset();
-        m_lastHistorySize = history.size();
-    }
-
-    // Tick animation
-    constexpr float animDuration = 0.4f;
-    if (m_activeAnim)
-    {
-        m_activeAnim->progress += ImGui::GetIO().DeltaTime / animDuration;
-        if (m_activeAnim->progress >= 1.0f)
-        {
-            m_activeAnim.reset();
-        }
-    }
-}
-
 void ChessView3D::renderScene(const ChessGame& game, const glm::mat4& view, const glm::mat4& proj)
 {
     const unsigned int progId            = m_program ? m_program->getGLId() : 0;
@@ -233,6 +193,7 @@ void ChessView3D::renderScene(const ChessGame& game, const glm::mat4& view, cons
     glUniform1i(uHasTextureLoc, 0);
 
     // PIECES
+    // 1. Draw static pieces
     for (int y = 0; y < 8; ++y)
     {
         for (int x = 0; x < 8; ++x)
@@ -241,38 +202,43 @@ void ChessView3D::renderScene(const ChessGame& game, const glm::mat4& view, cons
             if (p.isEmpty())
                 continue;
 
-            if (m_activeAnim && x == m_activeAnim->to.x && y == m_activeAnim->to.y)
+            // Check if this piece is currently flying
+            bool isAnimating = false;
+            for (const auto& anim : m_visualState.getActiveAnimations())
             {
-                const float t     = m_activeAnim->progress;
-                const float fromX = static_cast<float>(m_activeAnim->from.x) - 3.5f;
-                const float fromZ = static_cast<float>(m_activeAnim->from.y) - 3.5f;
-                const float toX   = static_cast<float>(m_activeAnim->to.x) - 3.5f;
-                const float toZ   = static_cast<float>(m_activeAnim->to.y) - 3.5f;
-
-                const float wx = fromX + (toX - fromX) * t;
-                const float wz = fromZ + (toZ - fromZ) * t;
-
-                const float pr = (p.color == PieceColor::White) ? 1.0f : 0.1f;
-                glUniform3f(uColorOverrideLoc, pr, pr, pr);
-
-                if (m_pieceRenderer)
+                if (anim.to.x == x && anim.to.y == y)
                 {
-                    m_pieceRenderer->draw(p, wx, wz, modelLoc, m_cubeVao);
+                    isAnimating = true;
+                    break;
                 }
             }
-            else
-            {
-                const float wx = static_cast<float>(x) - 3.5f;
-                const float wz = static_cast<float>(y) - 3.5f;
 
-                const float pr = (p.color == PieceColor::White) ? 1.0f : 0.1f;
-                glUniform3f(uColorOverrideLoc, pr, pr, pr);
+            // If it's animating, skip it! We draw it in the next loop.
+            if (isAnimating)
+                continue;
 
-                if (m_pieceRenderer)
-                {
-                    m_pieceRenderer->draw(p, wx, wz, modelLoc, m_cubeVao);
-                }
-            }
+            // Normal static draw
+            const float wx = static_cast<float>(x) - 3.5f;
+            const float wz = static_cast<float>(y) - 3.5f;
+            const float pr = (p.color == PieceColor::White) ? 1.0f : 0.1f;
+            glUniform3f(uColorOverrideLoc, pr, pr, pr);
+
+            if (m_pieceRenderer)
+                m_pieceRenderer->draw(p, wx, wz, modelLoc, m_cubeVao);
+        }
+    }
+
+    // 2. Draw flying pieces
+    for (const auto& anim : m_visualState.getActiveAnimations())
+    {
+        glm::vec3 pos = anim.getCurrentWorldPos();
+
+        const float pr = (anim.piece.color == PieceColor::White) ? 1.0f : 0.1f;
+        glUniform3f(uColorOverrideLoc, pr, pr, pr);
+
+        if (m_pieceRenderer)
+        {
+            m_pieceRenderer->draw(anim.piece, pos.x, pos.z, modelLoc, m_cubeVao);
         }
     }
 
@@ -307,12 +273,26 @@ void ChessView3D::draw(const ChessGame& game, ViewContext& ctx)
 
     if (m_activeCamera == m_povCam.get())
     {
-        if (ctx.selectedPos.x != -1 && ctx.selectedPos.y != -1)
+        auto activeAnim = m_visualState.getActiveAnimation();
+
+        if (activeAnim.has_value())
         {
-            ctx.lastPOVPos = ctx.selectedPos;
+            m_povCam->setTargetPosition(activeAnim->getCurrentWorldPos());
+            m_povCam->setMemory(activeAnim->to);
+            m_povCam->setLookDirection(activeAnim->from, activeAnim->to);
         }
-        const Position activePos = (ctx.lastPOVPos.x != -1) ? ctx.lastPOVPos : Position{3, 3};
-        m_povCam->setTargetPosition(glm::vec3(static_cast<float>(activePos.x) - 3.5f, 2.0f, static_cast<float>(activePos.y) - 3.5f));
+        else
+        {
+            m_povCam->setTargetFromBoardPos(ctx.selectedPos);
+            const auto& board = game.getBoard();
+            if (ctx.selectedPos.x != -1)
+            {
+                Piece p = board.getPiece(ctx.selectedPos.x, ctx.selectedPos.y);
+                m_povCam->setTargetAngle(p.color == PieceColor::Black ? 0.0f : 3.14159265f);
+            }
+        }
+
+        m_povCam->updateRotation(ImGui::GetIO().DeltaTime);
     }
 
     ImVec2 size = ImGui::GetContentRegionAvail();
@@ -345,7 +325,7 @@ void ChessView3D::draw(const ChessGame& game, ViewContext& ctx)
 
         glm::mat4 view = m_activeCamera->getViewMatrix();
 
-        updateAnimations(game);
+        m_visualState.update(ImGui::GetIO().DeltaTime, game);
 
         renderScene(game, view, proj);
 
@@ -363,6 +343,7 @@ void ChessView3D::draw(const ChessGame& game, ViewContext& ctx)
 
         if (ImGui::IsItemActive())
         {
+            m_povCam->clearLookDirection();
             m_activeCamera->processMouseDrag(ImGui::GetIO().MouseDelta.x, ImGui::GetIO().MouseDelta.y);
         }
         if (ImGui::IsItemHovered())

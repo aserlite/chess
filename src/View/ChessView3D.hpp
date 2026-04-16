@@ -7,6 +7,7 @@
 #include <optional>
 #include "../Logic/Game.hpp"
 #include "3D/BoardRenderer.hpp"
+#include "3D/ChessVisualState.hpp"
 #include "3D/ICamera.hpp"
 #include "3D/PieceRenderer.hpp"
 #include "3D/PovCamera.hpp"
@@ -44,6 +45,7 @@ private:
     unsigned int m_rbo     = 0;
 
     std::unique_ptr<BoardRenderer> m_boardRenderer;
+    ChessVisualState               m_visualState;
 
     std::unique_ptr<glimac::Program> m_program;
 

@@ -23,7 +23,23 @@ void PovCamera::processMouseScroll(float /*scrollDelta*/)
     // No zoom for the POV camera :(
 }
 
-void PovCamera::setTargetPosition(const glm::vec3& pos)
+// Takes true 3D world coordinates
+void PovCamera::setTargetPosition(const glm::vec3& worldPos)
 {
-    m_position = pos;
+    m_position = glm::vec3(worldPos.x, 2.0f, worldPos.z);
+}
+
+// Takes logic board coordinates
+void PovCamera::setTargetFromBoardPos(Position selectedPos)
+{
+    if (selectedPos.x != -1 && selectedPos.y != -1)
+    {
+        m_lastValidBoardPos = selectedPos;
+    }
+
+    // Convert the memory into 3D world space
+    float px = static_cast<float>(m_lastValidBoardPos.x) - 3.5f;
+    float pz = static_cast<float>(m_lastValidBoardPos.y) - 3.5f;
+
+    m_position = glm::vec3(px, 2.0f, pz);
 }
