@@ -3,6 +3,7 @@
 #include <imgui.h>
 #include <glimac/Program.hpp>
 #include <glimac/glm.hpp>
+#include <functional>
 #include <memory>
 #include <optional>
 #include "../Logic/Game.hpp"
@@ -16,7 +17,9 @@
 
 class ChessView3D {
 public:
-    ChessView3D();
+    using OnMoveRequestedCb = std::function<void(Position from, Position to)>;
+
+    ChessView3D(OnMoveRequestedCb onMoveRequested);
     ~ChessView3D();
 
     // copy is forbidden (because of openGL memory allocation)
@@ -33,6 +36,8 @@ public:
 private:
     void setupFramebuffer(const ImVec2& size);
     void updateAnimations(const ChessGame& game);
+
+    OnMoveRequestedCb m_onMoveRequested;
 
     std::unique_ptr<TrackballCamera> m_trackballCam;
     std::unique_ptr<PovCamera>       m_povCam;

@@ -7,6 +7,7 @@ ChessView::ChessView(ChessGame& game, AIController& aiController)
     : m_game(game)
     , m_aiController(aiController)
     , m_appState(AppState::Menu)
+    , m_view3D([this](Position from, Position to) { m_game.move(from, to); })
 {
 }
 

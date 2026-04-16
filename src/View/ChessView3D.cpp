@@ -8,8 +8,9 @@
 #include "3D/Skybox.hpp"
 #include "Logic/Piece.hpp"
 
-ChessView3D::ChessView3D()
-    : m_trackballCam(std::make_unique<TrackballCamera>())
+ChessView3D::ChessView3D(OnMoveRequestedCb onMoveRequested)
+    : m_onMoveRequested(std::move(onMoveRequested))
+    , m_trackballCam(std::make_unique<TrackballCamera>())
     , m_povCam(std::make_unique<PovCamera>())
     , m_activeCamera(m_trackballCam.get())
     , m_mousePicker(std::make_unique<MousePicker>())
@@ -178,11 +179,21 @@ void ChessView3D::draw(ChessGame& game, ViewContext& ctx)
                 {
                     Position targetPos = {x, y};
                     if (ctx.selectedPos.x == x && ctx.selectedPos.y == y)
+                    {
                         ctx.selectedPos = {-1, -1};
-                    else if (game.move(ctx.selectedPos, targetPos))
-                        ctx.selectedPos = {-1, -1};
-                    else if (!p.isEmpty() && p.color == game.getCurrentTurn())
-                        ctx.selectedPos = {x, y};
+                    }
+                    else
+                    {
+                        if (m_onMoveRequested)
+                            m_onMoveRequested(ctx.selectedPos, targetPos);
+
+                        // If the move was invalid or if we clicked a new piece,
+                        // handle the selection logic (the move request is handled by the orchestrator)
+                        if (!p.isEmpty() && p.color == game.getCurrentTurn())
+                            ctx.selectedPos = {x, y};
+                        else
+                            ctx.selectedPos = {-1, -1};
+                    }
                 }
             }
         }
