@@ -1,8 +1,8 @@
 #include "SceneRenderer.hpp"
+#include <glimac/Sphere.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
-#include <glimac/Sphere.hpp>
 #include "VictoryAnimator.hpp"
 
 SceneRenderer::SceneRenderer(const std::string& assetPrefix, const std::string& shaderPrefix)
@@ -36,7 +36,8 @@ SceneRenderer::SceneRenderer(const std::string& assetPrefix, const std::string& 
         assetPrefix + "skyboxes/night/top.png",
         assetPrefix + "skyboxes/night/bottom.png",
         assetPrefix + "skyboxes/night/front.png",
-        assetPrefix + "skyboxes/night/back.png"};
+        assetPrefix + "skyboxes/night/back.png"
+    };
     m_skyboxNight = std::make_unique<Skybox>(shaderPrefix, facesNight);
 
     const std::vector<std::string> facesDay = {
@@ -45,7 +46,8 @@ SceneRenderer::SceneRenderer(const std::string& assetPrefix, const std::string& 
         assetPrefix + "skyboxes/day/top.png",
         assetPrefix + "skyboxes/day/bottom.png",
         assetPrefix + "skyboxes/day/front.png",
-        assetPrefix + "skyboxes/day/back.png"};
+        assetPrefix + "skyboxes/day/back.png"
+    };
     m_skyboxDay = std::make_unique<Skybox>(shaderPrefix, facesDay);
 
     // Initialize Sphere for meteors
@@ -72,10 +74,7 @@ SceneRenderer::SceneRenderer(const std::string& assetPrefix, const std::string& 
     glBindVertexArray(0);
 }
 
-void SceneRenderer::drawScene(const ChessGame& game, const ViewContext& ctx,
-                             const glm::mat4& view, const glm::mat4& proj,
-                             std::optional<Position> hoveredPos,
-                             const ChessVisualState& visualState)
+void SceneRenderer::drawScene(const ChessGame& game, const ViewContext& ctx, const glm::mat4& view, const glm::mat4& proj, std::optional<Position> hoveredPos, const ChessVisualState& visualState)
 {
     if (m_program)
         m_program->use();
@@ -91,8 +90,8 @@ void SceneRenderer::drawScene(const ChessGame& game, const ViewContext& ctx,
     if (cubeVao)
         glBindVertexArray(cubeVao);
 
-    const auto& board = game.getBoard();
-    const VictoryAnimator& va = visualState.getVictoryAnimator();
+    const auto&            board = game.getBoard();
+    const VictoryAnimator& va    = visualState.getVictoryAnimator();
 
     // BOARD
     if (m_boardRenderer)
@@ -197,6 +196,19 @@ void SceneRenderer::drawScene(const ChessGame& game, const ViewContext& ctx,
 
         glDrawArrays(GL_TRIANGLES, 0, m_sphereVertexCount);
 
+        glm::mat4 fakeShadow = glm::translate(glm::mat4(1.0f), glm::vec3(wx, 0.05f, wz));
+        fakeShadow           = glm::scale(fakeShadow, glm::vec3(meteor.progress * 0.5f, 0.01f, meteor.progress * 0.5f));
+        glUniformMatrix4fv(m_modelLoc, 1, GL_FALSE, glm::value_ptr(fakeShadow));
+
+        // Dark transparent shadow
+        glUniform3f(m_uColorOverrideLoc, 0.0f, 0.0f, 0.0f);
+        glUniform1f(m_uOpacityLoc, 0.6f);
+        glDepthMask(GL_FALSE); // Help with transparency
+
+        glDrawArrays(GL_TRIANGLES, 0, m_sphereVertexCount);
+
+        glDepthMask(GL_TRUE);
+        glUniform1f(m_uOpacityLoc, 1.0f);
         glUniform1i(m_uUseOverrideLoc, 0);
     }
 
