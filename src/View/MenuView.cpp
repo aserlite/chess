@@ -1,6 +1,6 @@
 #include "MenuView.hpp"
-#include "../Logic/IGameRule.hpp"
 #include <cstring>
+#include "../Logic/IGameRule.hpp"
 
 MenuView::MenuView()
     : m_selectedDifficulty(AIDifficulty::Easy)
@@ -16,7 +16,7 @@ MenuAction MenuView::draw()
 
     ImGuiIO& io = ImGui::GetIO();
     ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-    ImGui::SetNextWindowSize(ImVec2(550, 350));
+    ImGui::SetNextWindowSize(ImVec2(550, 750));
 
     ImGui::Begin("Menu Principal", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
 
