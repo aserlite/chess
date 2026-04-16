@@ -48,16 +48,27 @@ void Framebuffer::unbind() const
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+void Framebuffer::clear(float r, float g, float b, float a) const
+{
+    glClearColor(r, g, b, a);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
 void Framebuffer::resize(int width, int height)
 {
-    if (m_width == width && m_height == height)
-        return;
-
     m_width  = width;
     m_height = height;
 
     cleanup();
     setup();
+}
+
+void Framebuffer::resizeIfNeeded(int width, int height)
+{
+    if (m_width == width && m_height == height)
+        return;
+
+    resize(width, height);
 }
 
 void Framebuffer::cleanup()

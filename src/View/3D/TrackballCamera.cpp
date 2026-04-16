@@ -11,6 +11,12 @@
     return glm::lookAt(glm::vec3(camX, camY, camZ), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 }
 
+glm::mat4 TrackballCamera::getProjectionMatrix(float width, float height) const
+{
+    float aspect = width / height;
+    return glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
+}
+
 void TrackballCamera::processMouseDrag(float deltaX, float deltaY)
 {
     m_angleX -= deltaX * 0.01f;

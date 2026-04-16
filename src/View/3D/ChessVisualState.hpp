@@ -1,3 +1,4 @@
+#pragma once
 #include <imgui.h>
 #include <glimac/Program.hpp>
 #include <glimac/glm.hpp>

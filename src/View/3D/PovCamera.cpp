@@ -4,11 +4,18 @@
 
 [[nodiscard]] glm::mat4 PovCamera::getViewMatrix() const
 {
-    const float lookX = std::sin(m_angleX) * std::cos(m_angleY);
-    const float lookY = std::sin(m_angleY);
-    const float lookZ = std::cos(m_angleX) * std::cos(m_angleY);
+    glm::vec3 direction(
+        std::cos(m_angleY) * std::sin(m_angleX),
+        std::sin(m_angleY),
+        std::cos(m_angleY) * std::cos(m_angleX));
 
-    return glm::lookAt(m_position, m_position + glm::vec3(lookX, lookY, lookZ), glm::vec3(0.0f, 1.0f, 0.0f));
+    return glm::lookAt(m_position, m_position + direction, glm::vec3(0.0f, 1.0f, 0.0f));
+}
+
+glm::mat4 PovCamera::getProjectionMatrix(float width, float height) const
+{
+    float aspect = width / height;
+    return glm::perspective(glm::radians(45.0f), aspect, 0.1f, 100.0f);
 }
 
 void PovCamera::processMouseDrag(float deltaX, float deltaY)

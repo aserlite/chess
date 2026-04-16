@@ -18,7 +18,9 @@ public:
     void bind() const;
     void unbind() const;
 
+    void clear(float r, float g, float b, float a = 1.0f) const;
     void resize(int width, int height);
+    void resizeIfNeeded(int width, int height);
 
     GLuint getTextureId() const { return m_colorTex; }
     int    getWidth() const { return m_width; }

@@ -15,6 +15,7 @@ protected:
 
 public:
     [[nodiscard]] virtual glm::mat4 getViewMatrix() const = 0;
+    [[nodiscard]] virtual glm::mat4 getProjectionMatrix(float width, float height) const = 0;
 
     virtual void processMouseDrag(float deltaX, float deltaY) = 0;
     virtual void processMouseScroll(float scrollDelta)        = 0;

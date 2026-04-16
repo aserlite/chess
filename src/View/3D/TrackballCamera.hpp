@@ -12,6 +12,8 @@ public:
     TrackballCamera() = default;
 
     [[nodiscard]] glm::mat4 getViewMatrix() const override;
+    [[nodiscard]] glm::mat4 getProjectionMatrix(float width, float height) const override;
+
     void processMouseDrag(float deltaX, float deltaY) override;
     void processMouseScroll(float scrollDelta) override;
 };
