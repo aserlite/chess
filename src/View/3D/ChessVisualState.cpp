@@ -31,7 +31,7 @@ void ChessVisualState::update(float deltaTime, const ChessGame& game)
         m_lastHistorySize = history.size();
     }
 
-    constexpr float animDuration = 0.4f;
+    constexpr float animDuration = 0.5f;
     for (auto& anim : m_activeAnimations)
     {
         float dx         = static_cast<float>(anim.to.x - anim.from.x);
