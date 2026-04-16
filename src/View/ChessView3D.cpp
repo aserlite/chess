@@ -118,7 +118,7 @@ void ChessView3D::init()
     setupBuffers();
     resizeFBO(m_width, m_height);
 
-    const std::vector<std::string> faces = {
+    const std::vector<std::string> facesNight = {
         prefixToUse + "skyboxes/night/right.png",
         prefixToUse + "skyboxes/night/left.png",
         prefixToUse + "skyboxes/night/top.png",
@@ -126,7 +126,17 @@ void ChessView3D::init()
         prefixToUse + "skyboxes/night/front.png",
         prefixToUse + "skyboxes/night/back.png"
     };
-    m_skybox = std::make_unique<Skybox>(shaderPrefixToUse, faces);
+    m_skyboxNight = std::make_unique<Skybox>(shaderPrefixToUse, facesNight);
+
+    const std::vector<std::string> facesDay = {
+        prefixToUse + "skyboxes/day/right.png",
+        prefixToUse + "skyboxes/day/left.png",
+        prefixToUse + "skyboxes/day/top.png",
+        prefixToUse + "skyboxes/day/bottom.png",
+        prefixToUse + "skyboxes/day/front.png",
+        prefixToUse + "skyboxes/day/back.png"
+    };
+    m_skyboxDay = std::make_unique<Skybox>(shaderPrefixToUse, facesDay);
 }
 
 void ChessView3D::resizeFBO(int width, int height)
@@ -177,10 +187,14 @@ void ChessView3D::renderScene(const ChessGame& game, const ViewContext& ctx, con
     const GLint        uTextureLoc       = glGetUniformLocation(progId, "uTexture");
     const GLint        uHasTextureLoc    = glGetUniformLocation(progId, "uHasTexture");
     const GLint        uOpacityLoc       = glGetUniformLocation(progId, "uOpacity");
+    const GLint        uIsWhiteTurnLoc   = glGetUniformLocation(progId, "uIsWhiteTurn");
+
+    const bool isWhiteTurn = game.getCurrentTurn() == PieceColor::White;
 
     glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(proj));
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
     glUniform1f(uOpacityLoc, 1.0f);
+    glUniform1i(uIsWhiteTurnLoc, isWhiteTurn ? 1 : 0);
 
     glBindVertexArray(m_cubeVao);
 
@@ -261,9 +275,14 @@ void ChessView3D::renderScene(const ChessGame& game, const ViewContext& ctx, con
     }
 
     // SKYBOX
-    if (m_skybox)
+    auto& activeSkybox = isWhiteTurn ? m_skyboxDay : m_skyboxNight;
+    if (activeSkybox)
     {
-        m_skybox->render(proj, view);
+        // Day: warm sunlit tint. Night: cool dark blue tint.
+        const glm::vec3 tint = isWhiteTurn
+            ? glm::vec3(1.0f, 0.95f, 0.85f)   // warm day
+            : glm::vec3(0.35f, 0.4f, 0.55f);   // cold night
+        activeSkybox->render(proj, view, tint);
     }
 
     // 3. Ghost piece (draw last with transparency)

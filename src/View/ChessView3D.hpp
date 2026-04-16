@@ -53,7 +53,8 @@ private:
     unsigned int m_cubeVbo = 0;
 
     std::unique_ptr<PieceRenderer> m_pieceRenderer;
-    std::unique_ptr<Skybox>        m_skybox;
+    std::unique_ptr<Skybox>        m_skyboxNight;
+    std::unique_ptr<Skybox>        m_skyboxDay;
 
     int m_width  = 800;
     int m_height = 600;

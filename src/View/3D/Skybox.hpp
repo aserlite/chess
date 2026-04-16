@@ -20,7 +20,7 @@ public:
     Skybox(Skybox&&)            = default;
     Skybox& operator=(Skybox&&) = default;
 
-    void render(const glm::mat4& projection, const glm::mat4& view);
+    void render(const glm::mat4& projection, const glm::mat4& view, const glm::vec3& tint = glm::vec3(1.0f));
 
 private:
     unsigned int                     m_vao, m_vbo, m_textureId;

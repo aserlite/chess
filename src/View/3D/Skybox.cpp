@@ -63,7 +63,7 @@ Skybox::~Skybox()
     glDeleteTextures(1, &m_textureId);
 }
 
-void Skybox::render(const glm::mat4& projection, const glm::mat4& view)
+void Skybox::render(const glm::mat4& projection, const glm::mat4& view, const glm::vec3& tint)
 {
     glDepthFunc(GL_LEQUAL);
     m_program->use();
@@ -76,6 +76,7 @@ void Skybox::render(const glm::mat4& projection, const glm::mat4& view)
 
     glUniformMatrix4fv(glGetUniformLocation(m_program->getGLId(), "view"), 1, GL_FALSE, glm::value_ptr(customView));
     glUniformMatrix4fv(glGetUniformLocation(m_program->getGLId(), "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+    glUniform3fv(glGetUniformLocation(m_program->getGLId(), "uTint"), 1, glm::value_ptr(tint));
 
     glBindVertexArray(m_vao);
     glActiveTexture(GL_TEXTURE0);
