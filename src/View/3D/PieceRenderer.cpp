@@ -50,8 +50,12 @@ void PieceRenderer::draw(const Piece& p, float wx, float wz, GLint modelLoc, GLu
         default: break;
         }
 
+        // Apply fatigue-based shrinkage
+        float fatigueScale = 1.0f / (1.0f + p.fatigue * 0.5f);
+        float finalScale   = scaleFactor * fatigueScale;
+
         glm::mat4 pModel = glm::translate(glm::mat4(1.0f), glm::vec3(wx, wy, wz) + offset) * danceMatrix;
-        pModel           = glm::scale(pModel, glm::vec3(scaleFactor, scaleFactor, scaleFactor));
+        pModel           = glm::scale(pModel, glm::vec3(finalScale, finalScale, finalScale));
 
         if (rotationY != 0.0f)
         {

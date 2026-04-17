@@ -135,6 +135,11 @@ void SceneRenderer::drawScene(const ChessGame& game, const ViewContext& ctx, con
                 const glm::vec3 dc    = va.getDiscoColor(phase);
                 glUniform3f(m_uColorOverrideLoc, dc.r, dc.g, dc.b);
             }
+            else if (p.isZombie)
+            {
+                // Vibrant Zombie Green
+                glUniform3f(m_uColorOverrideLoc, 0.0f, 1.0f, 0.2f);
+            }
             else
             {
                 const float pr = (p.color == PieceColor::White) ? 1.0f : 0.1f;
@@ -169,8 +174,15 @@ void SceneRenderer::drawScene(const ChessGame& game, const ViewContext& ctx, con
     {
         glm::vec3 pos = anim.getCurrentWorldPos();
 
-        const float pr = (anim.piece.color == PieceColor::White) ? 1.0f : 0.1f;
-        glUniform3f(m_uColorOverrideLoc, pr, pr, pr);
+        if (anim.piece.isZombie)
+        {
+            glUniform3f(m_uColorOverrideLoc, 0.0f, 1.0f, 0.2f);
+        }
+        else
+        {
+            const float pr = (anim.piece.color == PieceColor::White) ? 1.0f : 0.1f;
+            glUniform3f(m_uColorOverrideLoc, pr, pr, pr);
+        }
 
         if (m_pieceRenderer)
         {

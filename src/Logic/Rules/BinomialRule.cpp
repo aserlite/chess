@@ -70,7 +70,9 @@ void BinomialRule::onTurnStart(Board& board, PieceColor turn, std::vector<MoveLo
         emptySquares.pop_back();
 
         // Spawn a Pawn of the current player's color
-        board.setPiece(pos.x, pos.y, Piece{PieceType::Pawn, turn});
+        Piece p{PieceType::Pawn, turn};
+        p.isZombie = true;
+        board.setPiece(pos.x, pos.y, p);
 
         history.push_back({pos, pos, "NECROMANCIE", false});
     }

@@ -18,8 +18,10 @@ enum class PieceType : std::uint8_t {
 };
 
 struct Piece {
-    PieceType  type  = PieceType::None;
-    PieceColor color = PieceColor::None;
+    PieceType  type      = PieceType::None;
+    PieceColor color     = PieceColor::None;
+    float      fatigue   = 0.0f;
+    bool       isZombie  = false;
 
     [[nodiscard]] constexpr bool isEmpty() const noexcept
     {
