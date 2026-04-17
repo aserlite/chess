@@ -27,10 +27,9 @@ public:
     IGameRule& operator=(IGameRule&&) = delete;
 
     virtual bool overrideMove(Board& /*board*/, Position /*from*/, Position /*to*/) { return false; }
-
     virtual void onTurnStart(Board& /*board*/, PieceColor /*turn*/, std::vector<MoveLog>& /*history*/) {}
+    virtual void onPieceCaptured(Board& /*board*/, Position /*pos*/) {}
 
-    virtual void                      onPieceCaptured(Board& /*board*/, Position /*pos*/) {}
     [[nodiscard]] virtual std::string getRuleName() const  = 0;
     [[nodiscard]] virtual std::string getMathStats() const = 0;
 };
