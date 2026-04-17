@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../IGameRule.hpp"
 #include <random>
+#include "../IGameRule.hpp"
 
 class BernoulliRule : public IGameRule {
 public:
@@ -13,7 +13,7 @@ public:
     [[nodiscard]] std::string getMathStats() const override;
 
 private:
-    double m_probability;
-    std::mt19937 m_gen;
-    std::bernoulli_distribution m_dist;
+    double                                 m_probability;
+    std::mt19937                           m_gen;
+    std::uniform_real_distribution<double> m_uniformDist;
 };
