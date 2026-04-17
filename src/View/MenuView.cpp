@@ -64,7 +64,7 @@ MenuAction MenuView::draw()
                 m_selectedDifficulty = AIDifficulty::Easy;
             if (ImGui::RadioButton("Moyen (Gourmand)", m_selectedDifficulty == AIDifficulty::Medium))
                 m_selectedDifficulty = AIDifficulty::Medium;
-            if (ImGui::RadioButton("Difficile (Ca arrive fort)", m_selectedDifficulty == AIDifficulty::Hard))
+            if (ImGui::RadioButton("Difficile (Minmax)", m_selectedDifficulty == AIDifficulty::Hard))
                 m_selectedDifficulty = AIDifficulty::Hard;
 
             ImGui::Separator();
