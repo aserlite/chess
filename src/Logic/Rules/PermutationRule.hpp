@@ -5,8 +5,7 @@
 
 class PermutationRule : public IGameRule {
 public:
-    // activationProb = 0.05 : 5% de chance de déclencher le chaos à chaque début de tour
-    explicit PermutationRule(double activationProb = 0.05);
+    explicit PermutationRule(double activationProb = 0.25);
     ~PermutationRule() override = default;
 
     void onTurnStart(Board& board, PieceColor turn, std::vector<MoveLog>& history) override;

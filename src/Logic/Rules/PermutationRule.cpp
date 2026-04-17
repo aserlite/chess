@@ -74,7 +74,7 @@ void PermutationRule::onTurnStart(Board& board, PieceColor turn, std::vector<Mov
 
 std::string PermutationRule::getRuleName() const
 {
-    return "Le Chaos Royal";
+    return "Les Chaises Musicales";
 }
 
 std::string PermutationRule::getMathStats() const

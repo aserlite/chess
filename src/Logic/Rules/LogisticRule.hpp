@@ -6,7 +6,7 @@
 class LogisticRule : public IGameRule {
 public:
     // mu = 5.0, s = 2.0. Seuil à 8.5 pour que la conversion soit rare mais possible.
-    explicit LogisticRule(double mu = 5.0, double s = 2.0, double seuil = 8.5);
+    explicit LogisticRule(double mu = 5.0, double s = 2.0, double seuil = 6.5);
     ~LogisticRule() override = default;
 
     // On utilise overrideMove au lieu de onPieceCaptured
