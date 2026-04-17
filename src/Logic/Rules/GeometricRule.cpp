@@ -9,7 +9,7 @@
 GeometricRule::GeometricRule(double exhaustionProb)
     : m_prob(exhaustionProb)
     , m_gen(std::random_device{}())
-    , m_dist(exhaustionProb)
+    , m_uniformDist(0.0, 1.0) // Remplacement strict pour valider la contrainte 5.b
 {
 }
 
@@ -31,7 +31,8 @@ bool GeometricRule::overrideMove(Board& board, Position from, Position to)
 
     for (int i = 1; i < steps; ++i)
     {
-        if (m_dist(m_gen))
+        // Simulation d'une tentative de Bernoulli avec U(0,1) à chaque pas
+        if (m_uniformDist(m_gen) < m_prob)
         {
             const Piece& obstacle = board.getPiece(curX, curY);
             if (!obstacle.isEmpty())
@@ -70,13 +71,14 @@ std::string GeometricRule::getRuleName() const
 
 std::string GeometricRule::getMathStats() const
 {
+    // L'espérance et la variance étaient déjà mathématiquement correctes !
     const double esperance = 1.0 / m_prob;
     const double variance  = (1.0 - m_prob) / (m_prob * m_prob);
 
     std::ostringstream oss;
     oss << "Loi Géométrique (p=" << std::fixed << std::setprecision(2) << m_prob << ")"
-        << " | E[cases] = " << std::setprecision(1) << esperance
-        << " | Var = " << std::setprecision(2) << variance;
+        << " | Espérance : " << std::setprecision(2) << esperance
+        << " | Var : " << std::setprecision(2) << variance;
     return oss.str();
 }
 

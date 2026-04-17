@@ -12,7 +12,7 @@ public:
     [[nodiscard]] std::string getMathStats() const override;
 
 private:
-    double                      m_prob;
-    std::mt19937                m_gen;
-    std::bernoulli_distribution m_dist;
+    double                                 m_prob;
+    std::mt19937                           m_gen;
+    std::uniform_real_distribution<double> m_uniformDist;
 };
